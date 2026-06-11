@@ -118,8 +118,9 @@ sudo cat /var/lib/zakasnyava-li/home/.ssh/gh_deploy.pub
 
 ```bash
 # Seed GitHub's ED25519 host key (StrictHostKeyChecking refuses unknown hosts)
-sudo -u zakasnyava ssh-keyscan -t ed25519 github.com \
-    >> /var/lib/zakasnyava-li/home/.ssh/known_hosts
+# Use tee -a — shell >> runs as your user, not zakasnyava
+sudo -u zakasnyava ssh-keyscan -t ed25519 github.com | \
+    sudo -u zakasnyava tee -a /var/lib/zakasnyava-li/home/.ssh/known_hosts
 
 # Verify fingerprint matches GitHub's published key:
 # SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU
