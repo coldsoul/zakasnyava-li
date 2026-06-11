@@ -4,7 +4,6 @@ import { resolve } from 'node:path';
 import Base from '../layouts/Base.astro';
 
 const DATA_DIR = resolve(process.cwd(), 'public', 'data');
-const healthPath = resolve(DATA_DIR, 'feed_health.json');
 
 interface DayHealth {
   date: string;
@@ -13,9 +12,20 @@ interface DayHealth {
   pct: number | null;
 }
 
-const data: { days: DayHealth[] } = existsSync(healthPath)
-  ? JSON.parse(readFileSync(healthPath, 'utf-8'))
-  : { days: [] };
+const monthsPath = resolve(DATA_DIR, 'months.json');
+const months: string[] = existsSync(monthsPath)
+  ? JSON.parse(readFileSync(monthsPath, 'utf-8'))
+  : [];
+const latestMonth = months[0] ?? '';
+
+const healthPath = latestMonth
+  ? resolve(DATA_DIR, latestMonth, 'feed_health.json')
+  : '';
+
+const data: { days: DayHealth[] } =
+  healthPath && existsSync(healthPath)
+    ? JSON.parse(readFileSync(healthPath, 'utf-8'))
+    : { days: [] };
 
 function cellClass(pct: number | null): string {
   if (pct === null) return '';
@@ -30,25 +40,74 @@ function cellClass(pct: number | null): string {
     <h1>Здраве на данните</h1>
     <p class="subtitle">
       Процент записани снимки на TripUpdates фийда за всеки ден (очаквани: 4 320 на ден = 1 на всеки 20 с).
+      {months.length > 1 && (
+        <>
+          &nbsp;·&nbsp;
+          <select id="month-sel" data-latest={latestMonth}>
+            {months.map((m) => (
+              <option value={m} selected={m === latestMonth}>
+                {new Date(m + '-02').toLocaleDateString('bg-BG', { month: 'long', year: 'numeric' })}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
     </p>
   </div>
 
-  {
-    data.days.length === 0 ? (
-      <p style="color: var(--text-muted);">Няма данни за текущия месец.</p>
-    ) : (
-      <div class="health-grid">
-        {data.days.map((d) => (
-          <div class={`health-cell ${cellClass(d.pct)}`}>
-            <span class="hc-date">{d.date.slice(5)}</span>
-            <span class="hc-pct">{d.pct !== null ? `${d.pct}%` : '—'}</span>
-          </div>
-        ))}
-      </div>
-    )
-  }
+  <div id="health-content">
+    {
+      data.days.length === 0 ? (
+        <p style="color: var(--text-muted);">Няма данни за текущия месец.</p>
+      ) : (
+        <div class="health-grid">
+          {data.days.map((d) => (
+            <div class={`health-cell ${cellClass(d.pct)}`}>
+              <span class="hc-date">{d.date.slice(5)}</span>
+              <span class="hc-pct">{d.pct !== null ? `${d.pct}%` : '—'}</span>
+            </div>
+          ))}
+        </div>
+      )
+    }
+  </div>
 
   <p style="margin-top:1.5rem;font-size:0.85rem;color:var(--text-muted);">
     Зелено ≥ 95% · Жълто ≥ 70% · Червено &lt; 70%
   </p>
 </Base>
+
+<script>
+  const base = import.meta.env.BASE_URL;
+  const sel = document.getElementById('month-sel') as HTMLSelectElement | null;
+  if (sel) {
+    function cellClass(pct: number | null): string {
+      if (pct === null) return '';
+      if (pct >= 95) return 'health-ok';
+      if (pct >= 70) return 'health-warn';
+      return 'health-bad';
+    }
+
+    function renderHealth(days: any[]) {
+      const container = document.getElementById('health-content');
+      if (!container) return;
+      if (days.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted);">Няма данни за избрания месец.</p>';
+        return;
+      }
+      container.innerHTML = `<div class="health-grid">${days.map((d) =>
+        `<div class="health-cell ${cellClass(d.pct)}">
+          <span class="hc-date">${d.date.slice(5)}</span>
+          <span class="hc-pct">${d.pct !== null ? d.pct + '%' : '—'}</span>
+        </div>`
+      ).join('')}</div>`;
+    }
+
+    sel.addEventListener('change', async () => {
+      const month = sel.value;
+      const res = await fetch(`${base}data/${month}/feed_health.json`);
+      const data = await res.json();
+      renderHealth(data.days ?? []);
+    });
+  }
+</script>

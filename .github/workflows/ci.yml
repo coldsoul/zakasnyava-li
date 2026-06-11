@@ -55,10 +55,11 @@ jobs:
         working-directory: site
       - name: Seed fixture data
         run: |
-          mkdir -p site/public/data/line
-          cp tests/golden/index.json site/public/data/index.json
-          cp tests/golden/feed_health.json site/public/data/feed_health.json
-          cp tests/golden/line/R1.json site/public/data/line/R1.json
+          mkdir -p site/public/data/2026-06/line
+          cp tests/golden/2026-06/index.json site/public/data/2026-06/index.json
+          cp tests/golden/2026-06/feed_health.json site/public/data/2026-06/feed_health.json
+          cp tests/golden/2026-06/line/R1.json site/public/data/2026-06/line/R1.json
+          echo '["2026-06"]' > site/public/data/months.json
       - name: Build site
         run: npm run build
         working-directory: site

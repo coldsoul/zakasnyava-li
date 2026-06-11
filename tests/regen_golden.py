@@ -60,13 +60,14 @@ def main():
         make_fixture_db(db)
         compute("2026-06", db_path=db, data_root=tmp_path / "rawdata", site_data_dir=site)
 
-        GOLDEN_DIR.mkdir(parents=True, exist_ok=True)
-        (GOLDEN_DIR / "line").mkdir(exist_ok=True)
+        month_golden = GOLDEN_DIR / "2026-06"
+        month_golden.mkdir(parents=True, exist_ok=True)
+        (month_golden / "line").mkdir(exist_ok=True)
 
         for src, dst in [
-            (site / "index.json", GOLDEN_DIR / "index.json"),
-            (site / "line" / "R1.json", GOLDEN_DIR / "line" / "R1.json"),
-            (site / "feed_health.json", GOLDEN_DIR / "feed_health.json"),
+            (site / "2026-06" / "index.json", month_golden / "index.json"),
+            (site / "2026-06" / "line" / "R1.json", month_golden / "line" / "R1.json"),
+            (site / "2026-06" / "feed_health.json", month_golden / "feed_health.json"),
         ]:
             shutil.copy(src, dst)
             print(f"wrote {dst}")

@@ -4,7 +4,6 @@ import { resolve } from 'node:path';
 import Base from '../layouts/Base.astro';
 
 const DATA_DIR = resolve(process.cwd(), 'public', 'data');
-const indexPath = resolve(DATA_DIR, 'index.json');
 
 interface IndexRow {
   line_id: string;
@@ -20,16 +19,24 @@ interface IndexRow {
   sample_n: number;
 }
 
+const monthsPath = resolve(DATA_DIR, 'months.json');
+const months: string[] = existsSync(monthsPath)
+  ? JSON.parse(readFileSync(monthsPath, 'utf-8'))
+  : [];
+
+const now = new Date();
+const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+const latestMonth = months[0] ?? currentMonth;
+
+const indexPath = resolve(DATA_DIR, latestMonth, 'index.json');
 const rows: IndexRow[] = existsSync(indexPath)
   ? JSON.parse(readFileSync(indexPath, 'utf-8'))
   : [];
 
-const TYPE_BG: Record<string, string> = {
-  bus: 'автобус',
-  tram: 'трамвай',
-  trolleybus: 'тролейбус',
-  metro: 'метро',
-};
+const monthBg = new Date(latestMonth + '-02').toLocaleDateString('bg-BG', {
+  month: 'long',
+  year: 'numeric',
+});
 
 function trendStr(t: number | null): string {
   if (t === null) return '—';
@@ -45,19 +52,29 @@ function trendClass(t: number | null): string {
   return 'trend-flat';
 }
 
-// Determine displayed month from first row's data, fallback to current month
-const now = new Date();
-const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-const monthBg = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('bg-BG', {
-  month: 'long',
-  year: 'numeric',
-});
+const TYPE_BG: Record<string, string> = {
+  bus: 'автобус',
+  tram: 'трамвай',
+  trolleybus: 'тролейбус',
+  metro: 'метро',
+};
 ---
 
 <Base title="Начало">
   <div class="ranking-top">
     <h1>Надеждност на градски транспорт — София</h1>
-    <span class="ranking-meta">{monthBg}</span>
+    <div class="ranking-controls">
+      <span class="ranking-meta" id="ranking-month">{monthBg}</span>
+      {months.length > 1 && (
+        <select id="month-sel" data-latest={latestMonth}>
+          {months.map((m) => (
+            <option value={m} selected={m === latestMonth}>
+              {new Date(m + '-02').toLocaleDateString('bg-BG', { month: 'long', year: 'numeric' })}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
   </div>
 
   {
@@ -67,7 +84,7 @@ const monthBg = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateStrin
       </p>
     ) : (
       <div class="table-wrap">
-        <table>
+        <table id="ranking-table">
           <thead>
             <tr>
               <th>Линия</th>
@@ -86,7 +103,9 @@ const monthBg = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateStrin
                 <td class="td-line">
                   <a href={`/line/${row.line_id}/`}>{row.name}</a>
                 </td>
-                <td>{TYPE_BG[row.type] ?? row.type}</td>
+                <td>
+                  {TYPE_BG[row.type] ?? row.type}
+                </td>
                 <td class="td-num">
                   {row.median !== null ? `${row.median} мин` : '—'}
                 </td>
@@ -120,3 +139,67 @@ const monthBg = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateStrin
     <a href="/methodology/">Методология →</a>
   </p>
 </Base>
+
+<script>
+  const base = import.meta.env.BASE_URL;
+  const sel = document.getElementById('month-sel') as HTMLSelectElement | null;
+  if (!sel) {
+    // Single month — nothing to switch
+  } else {
+    const latestMonth = sel.dataset.latest ?? '';
+
+    const TYPE_BG: Record<string, string> = {
+      bus: 'автобус',
+      tram: 'трамвай',
+      trolleybus: 'тролейбус',
+      metro: 'метро',
+    };
+
+    function fmtMonth(m: string): string {
+      return new Date(m + '-02').toLocaleDateString('bg-BG', { month: 'long', year: 'numeric' });
+    }
+
+    function trendStr(t: number | null): string {
+      if (t === null) return '—';
+      if (t > 0.05) return `+${t.toFixed(1)}`;
+      if (t < -0.05) return t.toFixed(1);
+      return '±0';
+    }
+
+    function trendCls(t: number | null): string {
+      if (t === null) return 'trend-flat';
+      if (t > 0.05) return 'trend-up';
+      if (t < -0.05) return 'trend-dn';
+      return 'trend-flat';
+    }
+
+    function rowHtml(row: any, month: string): string {
+      const g = row.grade === '—' ? 'na' : row.grade;
+      const monthSuffix = month !== latestMonth ? `?month=${month}` : '';
+      return `<tr>
+        <td class="td-line"><a href="${base}line/${row.line_id}/${monthSuffix}">${row.name}</a></td>
+        <td>${TYPE_BG[row.type] ?? row.type}</td>
+        <td class="td-num">${row.median !== null ? row.median + ' мин' : '—'}</td>
+        <td class="td-num col-p90">${row.p90 !== null ? row.p90 + ' мин' : '—'}</td>
+        <td class="td-num col-served">${row.served_pct !== null ? row.served_pct + '%' : '—'}</td>
+        <td class="td-num">${row.ontime_pct !== null ? row.ontime_pct + '%' : '—'}</td>
+        <td class="td-num ${trendCls(row.trend_mom)}">${trendStr(row.trend_mom)}</td>
+        <td class="td-grade"><span class="badge badge-${g}">${row.grade}</span></td>
+      </tr>`;
+    }
+
+    sel.addEventListener('change', async () => {
+      const month = sel.value;
+      const heading = document.getElementById('ranking-month');
+      if (heading) heading.textContent = fmtMonth(month);
+
+      const table = document.getElementById('ranking-table');
+      const tbody = table?.querySelector('tbody');
+      if (!tbody) return;
+
+      const res = await fetch(`${base}data/${month}/index.json`);
+      const rows: any[] = await res.json();
+      tbody.innerHTML = rows.map((r) => rowHtml(r, month)).join('');
+    });
+  }
+</script>

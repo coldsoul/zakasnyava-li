@@ -154,8 +154,12 @@ stage_end stop_events
 
 stage_start metrics
 RESULT=$(SITE_DATA_DIR="${SITE_DATA_DIR}" DB_PATH="${DB_PATH}" \
-    "${PYTHON}" "${REPO_DIR}/pipeline/compute_metrics.py" --month "${MONTH}")
-LINES_GRADED=$("${PYTHON}" -c "import json,sys; print(json.loads(sys.argv[1])['lines_graded'])" "${RESULT}")
+    "${PYTHON}" "${REPO_DIR}/pipeline/compute_metrics.py" --all-months)
+LINES_GRADED=$("${PYTHON}" -c "
+import json, sys
+d = json.loads(sys.argv[1])
+print(d.get('by_month', {}).get('${MONTH}', 0))
+" "${RESULT}")
 stage_end metrics
 
 # ── Stage 4: Build static site ───────────────────────────────────────────────

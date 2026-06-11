@@ -338,6 +338,45 @@ def write_json(path: Path, data) -> None:
 
 
 # ---------------------------------------------------------------------------
+# All-months helpers
+# ---------------------------------------------------------------------------
+
+
+def get_all_months(db_path: Path) -> list[str]:
+    con = sqlite3.connect(str(db_path))
+    try:
+        rows = con.execute(
+            "SELECT DISTINCT strftime('%Y-%m', service_date) FROM stop_events ORDER BY 1"
+        ).fetchall()
+        return [r[0] for r in rows]
+    finally:
+        con.close()
+
+
+def _find_gtfs(data_root: Path) -> "Path | None":
+    candidates = sorted((data_root / "gtfs").glob("*.zip"), reverse=True)
+    return candidates[0] if candidates else None
+
+
+def compute_all(
+    db_path: Path = DB_PATH,
+    data_root: Path = DATA_ROOT,
+    site_data_dir: Path = SITE_DATA_DIR,
+    gtfs_zip: "Path | None" = None,
+) -> dict:
+    if gtfs_zip is None:
+        gtfs_zip = _find_gtfs(data_root)
+    months = get_all_months(db_path)
+    by_month: dict[str, int] = {}
+    for month_str in months:
+        r = compute(month_str, db_path, data_root, site_data_dir, gtfs_zip)
+        by_month[month_str] = r["lines_graded"]
+    months_sorted = sorted(months, reverse=True)
+    write_json(site_data_dir / "months.json", months_sorted)
+    return {"months": months_sorted, "by_month": by_month}
+
+
+# ---------------------------------------------------------------------------
 # Main compute
 # ---------------------------------------------------------------------------
 
@@ -395,7 +434,7 @@ def compute(
         line_type = meta.get("type", infer_type(route_id))
 
         write_json(
-            site_data_dir / "line" / f"{route_id}.json",
+            site_data_dir / month_str / "line" / f"{route_id}.json",
             {
                 "caveats": caveats,
                 "distribution_buckets": worse["distribution_buckets"],
@@ -440,22 +479,29 @@ def compute(
 
     index_rows.sort(key=lambda r: r["score"] or 0.0)
 
-    write_json(site_data_dir / "index.json", index_rows)
-    write_json(site_data_dir / "feed_health.json", build_feed_health(month_str, data_root))
+    write_json(site_data_dir / month_str / "index.json", index_rows)
+    write_json(site_data_dir / month_str / "feed_health.json", build_feed_health(month_str, data_root))
 
     return {"lines_graded": len(index_rows)}
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--month", required=True, help="Month YYYY-MM")
+    ap.add_argument("--month", help="Month YYYY-MM")
+    ap.add_argument("--all-months", action="store_true", help="Compute all months in DB")
     ap.add_argument("--gtfs", type=Path, help="GTFS zip path (auto-detected if omitted)")
     args = ap.parse_args()
 
-    if args.gtfs is None:
-        candidates = sorted((DATA_ROOT / "gtfs").glob("*.zip"), reverse=True)
-        args.gtfs = candidates[0] if candidates else None
+    if not args.all_months and not args.month:
+        ap.error("--month or --all-months required")
 
-    result = compute(args.month, gtfs_zip=args.gtfs)
+    if args.gtfs is None:
+        args.gtfs = _find_gtfs(DATA_ROOT)
+
+    if args.all_months:
+        result = compute_all(DB_PATH, DATA_ROOT, SITE_DATA_DIR, args.gtfs)
+    else:
+        result = compute(args.month, gtfs_zip=args.gtfs)
+
     print(json.dumps(result))
     sys.exit(0)

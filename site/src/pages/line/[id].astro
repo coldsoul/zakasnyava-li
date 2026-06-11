@@ -28,21 +28,31 @@ interface LineData {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const dataDir = resolve(process.cwd(), 'public', 'data');
-  const indexPath = resolve(dataDir, 'index.json');
+  const monthsPath = resolve(dataDir, 'months.json');
+  if (!existsSync(monthsPath)) return [];
+  const months: string[] = JSON.parse(readFileSync(monthsPath, 'utf-8'));
+  const latestMonth = months[0];
+  if (!latestMonth) return [];
+
+  const indexPath = resolve(dataDir, latestMonth, 'index.json');
   if (!existsSync(indexPath)) return [];
   const index: { line_id: string }[] = JSON.parse(readFileSync(indexPath, 'utf-8'));
 
   const paths = [];
   for (const row of index) {
-    const linePath = resolve(dataDir, 'line', `${row.line_id}.json`);
+    const linePath = resolve(dataDir, latestMonth, 'line', `${row.line_id}.json`);
     if (!existsSync(linePath)) continue;
     const lineData: LineData = JSON.parse(readFileSync(linePath, 'utf-8'));
-    paths.push({ params: { id: row.line_id }, props: { lineData } });
+    paths.push({ params: { id: row.line_id }, props: { lineData, months, latestMonth } });
   }
   return paths;
 };
 
-const { lineData } = Astro.props as { lineData: LineData };
+const { lineData, months, latestMonth } = Astro.props as {
+  lineData: LineData;
+  months: string[];
+  latestMonth: string;
+};
 
 const TYPE_BG: Record<string, string> = {
   bus: 'автобус',
@@ -92,7 +102,6 @@ function fmt(v: number | null, unit = ''): string {
   return v !== null ? `${v}${unit}` : '—';
 }
 
-// Determine worse direction (lower score)
 const directions = Object.entries(lineData.per_direction);
 const scored = directions.filter(([, d]) => d.score !== null);
 const worseId =
@@ -110,6 +119,8 @@ const hasMultipleDirs = directions.length > 1;
 const distLabels = lineData.distribution_buckets.map((b) => BUCKET_LABELS[b.label] ?? b.label);
 const distValues = lineData.distribution_buckets.map((b) => b.count);
 const weeklyData = lineData.weekly;
+
+const lineId = lineData.meta.line_id;
 ---
 
 <Base title={`Линия ${lineData.meta.name}`}>
@@ -119,155 +130,148 @@ const weeklyData = lineData.weekly;
       {TYPE_BG[lineData.meta.type] ?? lineData.meta.type}
       &nbsp;·&nbsp;
       <a href="/">← Всички линии</a>
+      {months.length > 1 && (
+        <>
+          &nbsp;·&nbsp;
+          <select
+            id="month-sel"
+            data-line-id={lineId}
+            data-latest={latestMonth}
+          >
+            {months.map((m) => (
+              <option value={m} selected={m === latestMonth}>
+                {new Date(m + '-02').toLocaleDateString('bg-BG', { month: 'long', year: 'numeric' })}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
     </p>
   </div>
 
   <!-- Verdict -->
   <div class="verdict">
-    <div class="verdict-grade" style={`color: ${gradeColor}`}>{lineGrade}</div>
-    <div class="verdict-text">{verdictText}</div>
+    <div id="line-grade-val" class="verdict-grade" style={`color: ${gradeColor}`}>{lineGrade}</div>
+    <div id="line-verdict-val" class="verdict-text">{verdictText}</div>
   </div>
 
   <!-- Caveats -->
-  {lineData.caveats.map((c) => <div class="caveat">{c.text}</div>)}
+  <div id="line-caveats">
+    {lineData.caveats.map((c) => <div class="caveat">{c.text}</div>)}
+  </div>
 
-  <!-- Metric cards — single direction: no tabs -->
-  {
-    !hasMultipleDirs &&
-      directions.map(([, stats]) => (
-        <div class="cards">
-          <div class="card">
-            <div class="card-label">Медиана</div>
-            {stats.median !== null ? (
-              <>
-                <div class="card-value">{stats.median}</div>
-                <div class="card-unit">мин</div>
-              </>
-            ) : (
-              <div class="card-na">—</div>
-            )}
+  <!-- Metric section (cards ± direction tabs) -->
+  <div id="metric-section">
+    {
+      !hasMultipleDirs &&
+        directions.map(([, stats]) => (
+          <div class="cards">
+            <div class="card">
+              <div class="card-label">Медиана</div>
+              {stats.median !== null ? (
+                <><div class="card-value">{stats.median}</div><div class="card-unit">мин</div></>
+              ) : (
+                <div class="card-na">—</div>
+              )}
+            </div>
+            <div class="card">
+              <div class="card-label">P90</div>
+              {stats.p90 !== null ? (
+                <><div class="card-value">{stats.p90}</div><div class="card-unit">мин</div></>
+              ) : (
+                <div class="card-na">—</div>
+              )}
+            </div>
+            <div class="card">
+              <div class="card-label">Изпълнени</div>
+              {stats.served_pct !== null ? (
+                <><div class="card-value">{stats.served_pct}</div><div class="card-unit">%</div></>
+              ) : (
+                <div class="card-na">—</div>
+              )}
+            </div>
+            <div class="card">
+              <div class="card-label">Навреме [−1,+3 мин]</div>
+              {stats.ontime_pct !== null ? (
+                <><div class="card-value">{stats.ontime_pct}</div><div class="card-unit">%</div></>
+              ) : (
+                <div class="card-na">—</div>
+              )}
+            </div>
           </div>
-          <div class="card">
-            <div class="card-label">P90</div>
-            {stats.p90 !== null ? (
-              <>
-                <div class="card-value">{stats.p90}</div>
-                <div class="card-unit">мин</div>
-              </>
-            ) : (
-              <div class="card-na">—</div>
-            )}
-          </div>
-          <div class="card">
-            <div class="card-label">Изпълнени</div>
-            {stats.served_pct !== null ? (
-              <>
-                <div class="card-value">{stats.served_pct}</div>
-                <div class="card-unit">%</div>
-              </>
-            ) : (
-              <div class="card-na">—</div>
-            )}
-          </div>
-          <div class="card">
-            <div class="card-label">Навреме [−1,+3 мин]</div>
-            {stats.ontime_pct !== null ? (
-              <>
-                <div class="card-value">{stats.ontime_pct}</div>
-                <div class="card-unit">%</div>
-              </>
-            ) : (
-              <div class="card-na">—</div>
-            )}
-          </div>
-        </div>
-      ))
-  }
+        ))
+    }
 
-  <!-- Metric cards — multiple directions: tabs -->
-  {
-    hasMultipleDirs && (
-      <div class="dir-tabs">
-        <input type="radio" id="dir-tab-0" name="dir-tab" class="dir-tab-input" checked />
-        <input type="radio" id="dir-tab-1" name="dir-tab" class="dir-tab-input" />
-        <div class="tab-section">
-          <div class="tab-bar">
-            {directions.map(([dirId]) => (
-              <label for={`dir-tab-${dirId}`} class={`tab-label tab-label-${dirId}`}>
-                Посока {dirId}
-                {dirId === worseId && <span class="worse-tag">(по-слаба)</span>}
-              </label>
+    {
+      hasMultipleDirs && (
+        <div class="dir-tabs">
+          <input type="radio" id="dir-tab-0" name="dir-tab" class="dir-tab-input" checked />
+          <input type="radio" id="dir-tab-1" name="dir-tab" class="dir-tab-input" />
+          <div class="tab-section">
+            <div class="tab-bar">
+              {directions.map(([dirId]) => (
+                <label for={`dir-tab-${dirId}`} class={`tab-label tab-label-${dirId}`}>
+                  Посока {dirId}
+                  {dirId === worseId && <span class="worse-tag">(по-слаба)</span>}
+                </label>
+              ))}
+            </div>
+            {directions.map(([dirId, stats]) => (
+              <div id={`panel-${dirId}`} class="tab-panel">
+                <div class="cards">
+                  <div class="card">
+                    <div class="card-label">Медиана</div>
+                    {stats.median !== null ? (
+                      <><div class="card-value">{stats.median}</div><div class="card-unit">мин</div></>
+                    ) : (
+                      <div class="card-na">—</div>
+                    )}
+                  </div>
+                  <div class="card">
+                    <div class="card-label">P90</div>
+                    {stats.p90 !== null ? (
+                      <><div class="card-value">{stats.p90}</div><div class="card-unit">мин</div></>
+                    ) : (
+                      <div class="card-na">—</div>
+                    )}
+                  </div>
+                  <div class="card">
+                    <div class="card-label">Изпълнени</div>
+                    {stats.served_pct !== null ? (
+                      <><div class="card-value">{stats.served_pct}</div><div class="card-unit">%</div></>
+                    ) : (
+                      <div class="card-na">—</div>
+                    )}
+                  </div>
+                  <div class="card">
+                    <div class="card-label">Навреме [−1,+3 мин]</div>
+                    {stats.ontime_pct !== null ? (
+                      <><div class="card-value">{stats.ontime_pct}</div><div class="card-unit">%</div></>
+                    ) : (
+                      <div class="card-na">—</div>
+                    )}
+                  </div>
+                </div>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;">
+                  Извадка: {stats.sample_n} спирания ·{' '}
+                  {stats.grade !== '—' ? (
+                    <>Оценка: <span class={`badge badge-${stats.grade}`}>{stats.grade}</span></>
+                  ) : (
+                    'Недостатъчно данни'
+                  )}
+                </p>
+              </div>
             ))}
           </div>
-          {directions.map(([dirId, stats]) => (
-            <div id={`panel-${dirId}`} class="tab-panel">
-              <div class="cards">
-                <div class="card">
-                  <div class="card-label">Медиана</div>
-                  {stats.median !== null ? (
-                    <>
-                      <div class="card-value">{stats.median}</div>
-                      <div class="card-unit">мин</div>
-                    </>
-                  ) : (
-                    <div class="card-na">—</div>
-                  )}
-                </div>
-                <div class="card">
-                  <div class="card-label">P90</div>
-                  {stats.p90 !== null ? (
-                    <>
-                      <div class="card-value">{stats.p90}</div>
-                      <div class="card-unit">мин</div>
-                    </>
-                  ) : (
-                    <div class="card-na">—</div>
-                  )}
-                </div>
-                <div class="card">
-                  <div class="card-label">Изпълнени</div>
-                  {stats.served_pct !== null ? (
-                    <>
-                      <div class="card-value">{stats.served_pct}</div>
-                      <div class="card-unit">%</div>
-                    </>
-                  ) : (
-                    <div class="card-na">—</div>
-                  )}
-                </div>
-                <div class="card">
-                  <div class="card-label">Навреме [−1,+3 мин]</div>
-                  {stats.ontime_pct !== null ? (
-                    <>
-                      <div class="card-value">{stats.ontime_pct}</div>
-                      <div class="card-unit">%</div>
-                    </>
-                  ) : (
-                    <div class="card-na">—</div>
-                  )}
-                </div>
-              </div>
-              <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;">
-                Извадка: {stats.sample_n} спирания ·{' '}
-                {stats.grade !== '—' ? (
-                  <>
-                    Оценка: <span class={`badge badge-${stats.grade}`}>{stats.grade}</span>
-                  </>
-                ) : (
-                  'Недостатъчно данни'
-                )}
-              </p>
-            </div>
-          ))}
         </div>
-      </div>
-    )
-  }
+      )
+    }
+  </div>
 
   <!-- Distribution chart (worse direction) -->
   <div class="chart-section">
     <p class="section-title">Разпределение на закъсненията</p>
-    <div class="chart-wrap">
+    <div class="chart-wrap" id="dist-chart-wrap">
       <canvas
         id="dist-chart"
         data-labels={JSON.stringify(distLabels)}
@@ -281,7 +285,7 @@ const weeklyData = lineData.weekly;
   <div class="heatmap-section">
     <p class="section-title">Медианно закъснение по час и ден от седмицата (мин)</p>
     <div class="heatmap-wrap">
-      <div class="heatmap-grid">
+      <div class="heatmap-grid" id="heatmap-grid">
         <div class="hm-blank"></div>
         {HOURS.map((h) => <div class="hm-hour">{h}</div>)}
         {
@@ -306,81 +310,258 @@ const weeklyData = lineData.weekly;
   </div>
 
   <!-- Weekly trend chart (worse direction) -->
-  {
-    weeklyData.length > 0 && (
-      <div class="chart-section">
+  <div class="chart-section" id="weekly-section">
+    {
+      weeklyData.length > 0 && (
         <p class="section-title">Седмична тенденция (мин)</p>
-        <div class="chart-wrap">
-          <canvas id="weekly-chart" data-weeks={JSON.stringify(weeklyData)} height="220"></canvas>
-        </div>
-      </div>
-    )
-  }
+      )
+    }
+    <div class="chart-wrap" id="weekly-chart-wrap">
+      {weeklyData.length > 0 && (
+        <canvas id="weekly-chart" data-weeks={JSON.stringify(weeklyData)} height="220"></canvas>
+      )}
+    </div>
+  </div>
 </Base>
 
 <script>
   import Chart from 'chart.js/auto';
 
+  const base = import.meta.env.BASE_URL;
+
+  const VERDICTS: Record<string, string> = {
+    A: 'Линията работи отлично — закъсненията са редки и кратки.',
+    B: 'Линията работи добре — повечето пътувания са навреме или с минимално закъснение.',
+    C: 'Линията работи задоволително — закъсненията са чести, но умерени.',
+    D: 'Линията работи лошо — закъсненията са значителни и чести.',
+    E: 'Линията работи много лошо — закъсненията са сериозен проблем за пътниците.',
+    '—': 'Недостатъчно данни за оценка на тази линия.',
+  };
+
+  const GRADE_COLORS: Record<string, string> = {
+    A: 'var(--grade-a)',
+    B: 'var(--grade-b)',
+    C: 'var(--grade-c)',
+    D: 'var(--grade-d)',
+    E: 'var(--grade-e)',
+    '—': 'var(--grade-na)',
+  };
+
+  const BUCKET_LABELS: Record<string, string> = {
+    '<-1m': '< −1 мин',
+    '-1..2m': '−1 до +2 мин',
+    '2..5m': '2 до 5 мин',
+    '5..10m': '5 до 10 мин',
+    '10..15m': '10 до 15 мин',
+    '15+m': '> 15 мин',
+  };
+
+  const DAYS_BG = ['Пон', 'Вт', 'Ср', 'Чет', 'Пет', 'Съб', 'Нед'];
+  const HOURS = Array.from({ length: 19 }, (_, i) => String(i + 5).padStart(2, '0'));
+
+  function heatColor(val: number | null): string {
+    if (val === null) return '#d1d5db';
+    const t = Math.min(Math.max(val, 0) / 15, 1);
+    const h = Math.round(120 - 120 * t);
+    return `hsl(${h},65%,${Math.round(85 - 25 * t)}%)`;
+  }
+
+  function worseDir(lineData: any): [string, any] {
+    const dirs: [string, any][] = Object.entries(lineData.per_direction);
+    const scored = dirs.filter(([, d]) => d.score !== null);
+    if (scored.length === 0) return dirs[0] ?? ['0', {}];
+    return scored.reduce((a, b) => ((a[1].score ?? 0) <= (b[1].score ?? 0) ? a : b));
+  }
+
+  function cardHtml(stats: any): string {
+    const metricHtml = (label: string, val: number | null, unit: string) =>
+      `<div class="card">
+        <div class="card-label">${label}</div>
+        ${val !== null ? `<div class="card-value">${val}</div><div class="card-unit">${unit}</div>` : '<div class="card-na">—</div>'}
+      </div>`;
+    return `<div class="cards">
+      ${metricHtml('Медиана', stats.median, 'мин')}
+      ${metricHtml('P90', stats.p90, 'мин')}
+      ${metricHtml('Изпълнени', stats.served_pct, '%')}
+      ${metricHtml('Навреме [−1,+3 мин]', stats.ontime_pct, '%')}
+    </div>`;
+  }
+
+  function metricSectionHtml(lineData: any, worseId: string): string {
+    const dirs: [string, any][] = Object.entries(lineData.per_direction);
+    if (dirs.length <= 1) {
+      return cardHtml(dirs[0]?.[1] ?? {});
+    }
+    const inputs = dirs.map((_, i) => `<input type="radio" id="dir-tab-${i}" name="dir-tab" class="dir-tab-input"${i === 0 ? ' checked' : ''}>`).join('');
+    const labels = dirs.map(([id]) =>
+      `<label for="dir-tab-${id}" class="tab-label tab-label-${id}">Посока ${id}${id === worseId ? ' <span class="worse-tag">(по-слаба)</span>' : ''}</label>`
+    ).join('');
+    const panels = dirs.map(([id, stats]) =>
+      `<div id="panel-${id}" class="tab-panel">
+        ${cardHtml(stats)}
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;">
+          Извадка: ${stats.sample_n} спирания · ${stats.grade !== '—' ? `Оценка: <span class="badge badge-${stats.grade}">${stats.grade}</span>` : 'Недостатъчно данни'}
+        </p>
+      </div>`
+    ).join('');
+    return `<div class="dir-tabs">${inputs}<div class="tab-section"><div class="tab-bar">${labels}</div>${panels}</div></div>`;
+  }
+
+  function heatmapGridHtml(heatmap: (number | null)[][]): string {
+    let html = '<div class="hm-blank"></div>' + HOURS.map(h => `<div class="hm-hour">${h}</div>`).join('');
+    for (let d = 0; d < 7; d++) {
+      html += `<div class="hm-day">${DAYS_BG[d]}</div>`;
+      for (let h = 0; h < 19; h++) {
+        const val = heatmap[d]?.[h] ?? null;
+        const title = val !== null ? `${val} мин` : 'няма данни (< 20 спирания)';
+        html += `<div class="hm-cell" style="background:${heatColor(val)}" title="${title}"></div>`;
+      }
+    }
+    return html;
+  }
+
+  // Chart instances — kept for data updates
+  let distChart: Chart | null = null;
+  let weeklyChart: Chart | null = null;
+
+  function initCharts(lineData: any) {
+    const [, wStats] = worseDir(lineData);
+
+    // Distribution chart
+    const distWrap = document.getElementById('dist-chart-wrap');
+    if (distWrap) {
+      distWrap.innerHTML = '<canvas id="dist-chart" height="220"></canvas>';
+      const canvas = distWrap.querySelector('canvas') as HTMLCanvasElement;
+      if (distChart) { try { distChart.destroy(); } catch (_) {} }
+      const labels = lineData.distribution_buckets.map((b: any) => BUCKET_LABELS[b.label] ?? b.label);
+      const values = lineData.distribution_buckets.map((b: any) => b.count);
+      distChart = new Chart(canvas, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Брой спирания', data: values, backgroundColor: '#6366f1', borderRadius: 4 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+      });
+    }
+
+    // Weekly chart
+    const weeklyWrap = document.getElementById('weekly-chart-wrap');
+    const weeklySection = document.getElementById('weekly-section');
+    if (weeklyWrap) {
+      const weekly = lineData.weekly ?? [];
+      const titleEl = weeklySection?.querySelector('.section-title');
+      if (weekly.length > 0) {
+        weeklyWrap.innerHTML = '<canvas id="weekly-chart" height="220"></canvas>';
+        const canvas = weeklyWrap.querySelector('canvas') as HTMLCanvasElement;
+        if (weeklyChart) { try { weeklyChart.destroy(); } catch (_) {} }
+        weeklyChart = new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: weekly.map((w: any) => w.week_start),
+            datasets: [
+              { label: 'Медиана', data: weekly.map((w: any) => w.median), borderColor: '#6366f1', backgroundColor: 'transparent', tension: 0.3, pointRadius: 4 },
+              { label: 'P90', data: weekly.map((w: any) => w.p90), borderColor: '#ef4444', backgroundColor: 'transparent', tension: 0.3, borderDash: [5, 5], pointRadius: 4 },
+            ],
+          },
+          options: { responsive: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'минути' } } } },
+        });
+        if (!titleEl) {
+          const p = document.createElement('p');
+          p.className = 'section-title';
+          p.textContent = 'Седмична тенденция (мин)';
+          weeklySection?.prepend(p);
+        }
+      } else {
+        weeklyWrap.innerHTML = '';
+        titleEl?.remove();
+      }
+    }
+  }
+
+  function renderLineData(lineData: any) {
+    const [wId, wStats] = worseDir(lineData);
+    const grade = wStats?.grade ?? '—';
+
+    // Verdict
+    const gradeEl = document.getElementById('line-grade-val');
+    if (gradeEl) {
+      gradeEl.textContent = grade;
+      gradeEl.style.color = GRADE_COLORS[grade] ?? 'var(--grade-na)';
+    }
+    const verdictEl = document.getElementById('line-verdict-val');
+    if (verdictEl) verdictEl.textContent = VERDICTS[grade] ?? VERDICTS['—'];
+
+    // Caveats
+    const caveatsEl = document.getElementById('line-caveats');
+    if (caveatsEl) {
+      caveatsEl.innerHTML = lineData.caveats.map((c: any) => `<div class="caveat">${c.text}</div>`).join('');
+    }
+
+    // Metric cards
+    const metricEl = document.getElementById('metric-section');
+    if (metricEl) metricEl.innerHTML = metricSectionHtml(lineData, wId);
+
+    // Heatmap
+    const heatmapGrid = document.getElementById('heatmap-grid');
+    if (heatmapGrid) heatmapGrid.innerHTML = heatmapGridHtml(lineData.heatmap);
+
+    // Charts
+    initCharts(lineData);
+  }
+
+  // Initial chart render from embedded data
   const distCanvas = document.getElementById('dist-chart') as HTMLCanvasElement | null;
   if (distCanvas) {
     const labels: string[] = JSON.parse(distCanvas.dataset.labels!);
     const values: number[] = JSON.parse(distCanvas.dataset.values!);
-    new Chart(distCanvas, {
+    distChart = new Chart(distCanvas, {
       type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'Брой спирания',
-            data: values,
-            backgroundColor: '#6366f1',
-            borderRadius: 4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } },
-      },
+      data: { labels, datasets: [{ label: 'Брой спирания', data: values, backgroundColor: '#6366f1', borderRadius: 4 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
     });
   }
 
   const weeklyCanvas = document.getElementById('weekly-chart') as HTMLCanvasElement | null;
   if (weeklyCanvas) {
-    const weeks: { week_start: string; median: number | null; p90: number | null }[] = JSON.parse(
-      weeklyCanvas.dataset.weeks!,
-    );
-    new Chart(weeklyCanvas, {
+    const weeks: { week_start: string; median: number | null; p90: number | null }[] = JSON.parse(weeklyCanvas.dataset.weeks!);
+    weeklyChart = new Chart(weeklyCanvas, {
       type: 'line',
       data: {
         labels: weeks.map((w) => w.week_start),
         datasets: [
-          {
-            label: 'Медиана',
-            data: weeks.map((w) => w.median),
-            borderColor: '#6366f1',
-            backgroundColor: 'transparent',
-            tension: 0.3,
-            pointRadius: 4,
-          },
-          {
-            label: 'P90',
-            data: weeks.map((w) => w.p90),
-            borderColor: '#ef4444',
-            backgroundColor: 'transparent',
-            tension: 0.3,
-            borderDash: [5, 5],
-            pointRadius: 4,
-          },
+          { label: 'Медиана', data: weeks.map((w) => w.median), borderColor: '#6366f1', backgroundColor: 'transparent', tension: 0.3, pointRadius: 4 },
+          { label: 'P90', data: weeks.map((w) => w.p90), borderColor: '#ef4444', backgroundColor: 'transparent', tension: 0.3, borderDash: [5, 5], pointRadius: 4 },
         ],
       },
-      options: {
-        responsive: true,
-        scales: {
-          y: { beginAtZero: true, title: { display: true, text: 'минути' } },
-        },
-      },
+      options: { responsive: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'минути' } } } },
+    });
+  }
+
+  // Month selector
+  const sel = document.getElementById('month-sel') as HTMLSelectElement | null;
+  if (sel) {
+    const lineId = sel.dataset.lineId!;
+    const latestMonth = sel.dataset.latest!;
+
+    // Check for ?month= query param on load
+    const initMonth = new URLSearchParams(window.location.search).get('month');
+    if (initMonth && initMonth !== latestMonth) {
+      sel.value = initMonth;
+      fetch(`${base}data/${initMonth}/line/${lineId}.json`)
+        .then((r) => r.json())
+        .then(renderLineData)
+        .catch(() => {});
+    }
+
+    sel.addEventListener('change', async () => {
+      const month = sel.value;
+      const url = new URL(window.location.href);
+      if (month === latestMonth) {
+        url.searchParams.delete('month');
+      } else {
+        url.searchParams.set('month', month);
+      }
+      history.pushState({}, '', url.toString());
+      const res = await fetch(`${base}data/${month}/line/${lineId}.json`);
+      renderLineData(await res.json());
     });
   }
 </script>

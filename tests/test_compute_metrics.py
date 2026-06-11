@@ -7,6 +7,7 @@ from pathlib import Path
 from pipeline.compute_metrics import (
     clamp01,
     compute,
+    compute_all,
     compute_score,
     percentile_linear,
     r1,
@@ -139,8 +140,8 @@ def test_golden_output(tmp_path):
 
     # Byte-identical comparison against committed golden files
     for rel in ("index.json", "line/R1.json", "feed_health.json"):
-        actual = (site / rel).read_text()
-        expected = (GOLDEN_DIR / rel).read_text()
+        actual = (site / "2026-06" / rel).read_text()
+        expected = (GOLDEN_DIR / "2026-06" / rel).read_text()
         assert actual == expected, f"Golden mismatch: {rel}"
 
 
@@ -155,7 +156,7 @@ def test_metric_values(tmp_path):
     _make_fixture_db(db)
     compute("2026-06", db_path=db, data_root=tmp_path / "rawdata", site_data_dir=site)
 
-    idx = json.loads((site / "index.json").read_text())
+    idx = json.loads((site / "2026-06" / "index.json").read_text())
     assert len(idx) == 1
     row = idx[0]
     assert row["grade"] == "C"
@@ -167,7 +168,7 @@ def test_metric_values(tmp_path):
     assert row["sample_n"] == 304
     assert row["trend_mom"] is None
 
-    line = json.loads((site / "line" / "R1.json").read_text())
+    line = json.loads((site / "2026-06" / "line" / "R1.json").read_text())
     d0 = line["per_direction"]["0"]
     assert d0["grade"] == "C"
     assert d0["median"] == 3.0
@@ -192,7 +193,22 @@ def test_metric_values(tmp_path):
     assert weekly[1] == {"median": 5.0, "p90": 5.0, "week_start": "2026-06-08"}
 
     assert line["caveats"] == []
-    assert json.loads((site / "feed_health.json").read_text()) == {"days": []}
+    assert json.loads((site / "2026-06" / "feed_health.json").read_text()) == {"days": []}
+
+
+def test_compute_all_writes_months_json(tmp_path):
+    db = tmp_path / "stop_events.sqlite"
+    site = tmp_path / "data"
+    _make_fixture_db(db)
+
+    result = compute_all(db_path=db, data_root=tmp_path / "rawdata", site_data_dir=site)
+
+    assert result["months"] == ["2026-06"]
+    assert result["by_month"] == {"2026-06": 1}
+
+    months = json.loads((site / "months.json").read_text())
+    assert months == ["2026-06"]
+    assert (site / "2026-06" / "index.json").exists()
 
 
 def test_min_sample_excluded(tmp_path):
@@ -212,9 +228,9 @@ def test_min_sample_excluded(tmp_path):
 
     compute("2026-06", db_path=db, data_root=tmp_path / "raw", site_data_dir=site)
 
-    idx = json.loads((site / "index.json").read_text())
+    idx = json.loads((site / "2026-06" / "index.json").read_text())
     assert idx == []  # excluded from ranking
 
-    line = json.loads((site / "line" / "X1.json").read_text())
+    line = json.loads((site / "2026-06" / "line" / "X1.json").read_text())
     assert line["per_direction"]["0"]["grade"] == "—"
     assert line["per_direction"]["0"]["median"] is None
