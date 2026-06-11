@@ -114,9 +114,17 @@ sudo cat /var/lib/zakasnyava-li/home/.ssh/gh_deploy.pub
 - Check **Allow write access** ✓
 - Click **Add key**
 
-**Back on the VPS** — switch remote to SSH and verify:
+**Back on the VPS** — seed GitHub's host key, switch remote to SSH, and verify:
 
 ```bash
+# Seed GitHub's ED25519 host key (StrictHostKeyChecking refuses unknown hosts)
+sudo -u zakasnyava ssh-keyscan -t ed25519 github.com \
+    >> /var/lib/zakasnyava-li/home/.ssh/known_hosts
+
+# Verify fingerprint matches GitHub's published key:
+# SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU
+ssh-keygen -lf /var/lib/zakasnyava-li/home/.ssh/known_hosts
+
 # Switch from HTTPS to SSH remote
 sudo -u zakasnyava git -C /opt/zakasnyava-li remote set-url origin \
     git@github.com:coldsoul/zakasnyava-li.git
