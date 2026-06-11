@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "zakasnyava_li",
+  "project_id": "8c40b04a-c750-4cb2-a873-822e4b484882"
+}

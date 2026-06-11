@@ -21,3 +21,9 @@ ops/secrets.env
 # OS
 .DS_Store
 *.swp
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
