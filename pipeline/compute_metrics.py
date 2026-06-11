@@ -343,12 +343,16 @@ def write_json(path: Path, data) -> None:
 
 
 def get_all_months(db_path: Path) -> list[str]:
+    if not db_path.exists():
+        return []
     con = sqlite3.connect(str(db_path))
     try:
         rows = con.execute(
             "SELECT DISTINCT strftime('%Y-%m', service_date) FROM stop_events ORDER BY 1"
         ).fetchall()
         return [r[0] for r in rows]
+    except sqlite3.OperationalError:
+        return []
     finally:
         con.close()
 
