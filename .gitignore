@@ -1,0 +1,23 @@
+# collected data — never commit raw snapshots
+data/
+
+# generated site assets
+site/public/data/
+site/dist/
+site/.astro/
+site/node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.uv/
+dist/
+
+# systemd secrets — never commit URLs or credentials
+ops/secrets.env
+
+# OS
+.DS_Store
+*.swp

@@ -1,0 +1,15 @@
+[
+  {
+    "line_id": "94",
+    "name": "94",
+    "type": "bus",
+    "median": 0.5,
+    "p90": 4.0,
+    "served_pct": 96.2,
+    "ontime_pct": 77.0,
+    "score": 72.1,
+    "grade": "B",
+    "trend_mom": null,
+    "sample_n": 1817
+  }
+]

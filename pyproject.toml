@@ -1,0 +1,35 @@
+[project]
+name = "zakasnyava-li"
+version = "0.1.0"
+description = "Sofia public transit reliability tracker"
+requires-python = ">=3.11"
+dependencies = [
+    "gtfs-realtime-bindings>=1.0.0",
+    "requests>=2.31.0",
+    "zstandard>=0.22.0",
+    "polars>=0.20.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.5.0",
+    "bandit[toml]>=1.7.0",
+    "pip-audit>=2.7.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]
+
+[tool.bandit]
+exclude_dirs = ["tests", "site"]
+skips = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
