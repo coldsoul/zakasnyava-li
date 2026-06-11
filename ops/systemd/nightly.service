@@ -1,0 +1,37 @@
+[Unit]
+Description=zakasnyava-li nightly pipeline
+Documentation=https://github.com/coldsoul/zakasnyava-li
+After=network-online.target
+Wants=network-online.target
+OnFailure=notify@%n.service
+
+[Service]
+Type=oneshot
+User=zakasnyava
+Group=zakasnyava
+WorkingDirectory=/opt/zakasnyava-li
+
+ExecStart=/opt/zakasnyava-li/ops/nightly.sh
+
+# Runtime configuration
+Environment=REPO_DIR=/opt/zakasnyava-li
+Environment=DATA_ROOT=/var/lib/zakasnyava-li/data
+Environment=DB_PATH=/var/lib/zakasnyava-li/data/derived/stop_events.sqlite
+Environment=SITE_DATA_DIR=/opt/zakasnyava-li/site/public/data
+Environment=PROM_DIR=/var/lib/node_exporter/textfile_collector
+Environment=DEPLOY_DEST=/var/www/html/zakasnyava-li
+Environment=PYTHON=/opt/zakasnyava-li/.venv/bin/python
+Environment=TZ=Europe/Sofia
+
+# Load DEADMAN_URL and other secrets — file is not committed to the repo
+EnvironmentFile=-/etc/zakasnyava-li/secrets.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nightly
+
+# Prevent partial deploys from stacking up
+TimeoutStopSec=600
+
+[Install]
+WantedBy=multi-user.target

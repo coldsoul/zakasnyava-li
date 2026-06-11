@@ -1,0 +1,13 @@
+[Unit]
+Description=zakasnyava-li nightly pipeline timer
+Documentation=https://github.com/coldsoul/zakasnyava-li
+
+[Timer]
+# 03:10 Europe/Sofia — after midnight-crossing trips settle, before commuters start
+OnCalendar=*-*-* 03:10:00 Europe/Sofia
+# Run once for each missed occurrence if the system was offline
+Persistent=true
+Unit=nightly.service
+
+[Install]
+WantedBy=timers.target

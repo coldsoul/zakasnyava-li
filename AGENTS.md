@@ -27,8 +27,8 @@ Branch naming: `epic/1-collector`, `epic/2-stop-events`, `epic/3-metrics`, `epic
 | 4.1 | Astro scaffold + methodology page | done |
 | 4.2 | Homepage ranking table | done |
 | 4.3 | Line page (charts, heatmap, weekly trend) | done |
-| 5.1 | Nightly orchestration + observability | todo |
-| 5.2 | VPS README + ops documentation | todo |
+| 5.1 | Nightly orchestration + observability | done |
+| 5.2 | VPS README + ops documentation | done |
 
 ## Data flow
 
