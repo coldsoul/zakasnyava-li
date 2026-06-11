@@ -41,6 +41,16 @@ Feed quirks are in `SPEC.md §2`. They are normative — the matcher MUST handle
 
 VehiclePositions processing, stop-level pages, excess-waiting-time metric, real-time site features, accounts, English version, third-party API.
 
+## Keeping docs current
+
+After completing any bead or making a meaningful change:
+
+- **`AGENTS.md`** — mark completed beads `done`; update data flow or feed quirks if discoveries change them
+- **`CLAUDE.md`** — update commands if new scripts are added; update stack table if tech changes
+- **`README.md`** — update setup instructions if the dev workflow changes
+
+Stale docs are bugs. If something here contradicts the code, fix the docs.
+
 ---
 
 > Progressive discovery: this file covers the essentials. For pipeline internals read SPEC.md §2–§6. For site structure read SPEC.md §5–§6. For observability read SPEC.md §8. AGENTS.md has story status and data flow.

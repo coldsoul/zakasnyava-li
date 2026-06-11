@@ -65,6 +65,21 @@ If feed contradicts RECON.md: stop and report, do not guess.
 2. node_exporter textfile metrics — `collector.prom` + `nightly.prom`; always atomic write (tmp + rename)
 3. Journald logs — both processes via systemd; one structured JSON summary line per nightly run
 
+## Keeping docs current
+
+After completing any bead or making a meaningful change, update these files as needed:
+
+| File | When to update |
+|------|---------------|
+| `AGENTS.md` story status | Every completed bead — mark `done` |
+| `AGENTS.md` data flow | If file paths, process names, or flow changes |
+| `AGENTS.md` feed quirks | If RECON.md is updated with new discoveries |
+| `CLAUDE.md` commands | If new entry-point scripts are added |
+| `CLAUDE.md` stack table | If a dependency is swapped |
+| `README.md` | If setup steps or dev workflow changes |
+
+Do not leave completed beads marked `todo`. Do not let commands drift from reality.
+
 ## v2 — do not build
 
 VehiclePositions processing, stop-level drill-down, excess-waiting-time metric, real-time site features, accounts/comments/API, English version, ridership weighting.
