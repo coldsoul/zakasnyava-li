@@ -43,7 +43,7 @@ Tested on Ubuntu 22.04 LTS. Minimum: 1 vCPU, 1 GB RAM, 40 GB disk.
 
 ```bash
 sudo apt update
-sudo apt install -y git python3-pip nodejs npm curl
+sudo apt install -y git nodejs npm curl
 ```
 
 ### 2. Create service user and directories
@@ -68,10 +68,15 @@ sudo chown -R zakasnyava:zakasnyava \
 ```bash
 sudo -u zakasnyava git clone https://github.com/coldsoul/zakasnyava-li.git \
     /opt/zakasnyava-li
-cd /opt/zakasnyava-li
-sudo -u zakasnyava python3 -m venv .venv
-sudo -u zakasnyava .venv/bin/pip install uv
-sudo -u zakasnyava .venv/bin/uv sync
+
+# Install uv as a standalone binary for the service user
+sudo -u zakasnyava -H sh -c \
+    'curl -LsSf https://astral.sh/uv/install.sh | sh'
+
+# uv sync creates .venv and installs all Python deps
+sudo -u zakasnyava /var/lib/zakasnyava-li/home/.local/bin/uv sync \
+    --project /opt/zakasnyava-li
+
 cd site && sudo -u zakasnyava npm ci
 ```
 
