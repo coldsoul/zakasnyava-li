@@ -41,6 +41,19 @@ Feed quirks are in `SPEC.md §2`. They are normative — the matcher MUST handle
 
 VehiclePositions processing, stop-level pages, excess-waiting-time metric, real-time site features, accounts, English version, third-party API.
 
+## Development workflow
+
+Each epic is implemented on a feature branch (`epic/N-short-name`), then a PR is opened for review before merging to `main`.
+
+```bash
+git checkout -b epic/1-collector   # start epic
+# ... implement ...
+gh pr create                        # open PR when epic is done
+# wait for approval, then merge
+```
+
+Never commit directly to `main` for epic work.
+
 ## Keeping docs current
 
 After completing any bead or making a meaningful change:

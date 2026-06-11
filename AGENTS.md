@@ -2,6 +2,19 @@
 
 Agent guide. Read CLAUDE.md first, then this file for story status and data flow.
 
+## Branch and PR workflow
+
+Each epic lives on its own feature branch. Never commit epic work directly to `main`.
+
+```bash
+git checkout -b epic/N-short-name   # one branch per epic
+# implement all beads for the epic
+gh pr create --title "epic(N): ..." # open PR when epic done
+# wait for owner approval before merging
+```
+
+Branch naming: `epic/1-collector`, `epic/2-stop-events`, `epic/3-metrics`, `epic/4-site`, `epic/5-nightly`.
+
 ## Story status
 
 | Bead | Description | Status |
