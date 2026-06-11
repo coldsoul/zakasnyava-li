@@ -21,8 +21,8 @@ Branch naming: `epic/1-collector`, `epic/2-stop-events`, `epic/3-metrics`, `epic
 |------|-------------|--------|
 | 0.1 | Repo scaffold + CI | done |
 | 1.1 | Collector + systemd unit | done |
-| 2.1 | Static GTFS loader + DB schema | todo |
-| 2.2 | Snapshot streamer + stop event matcher | todo |
+| 2.1 | Static GTFS loader + DB schema | done |
+| 2.2 | Snapshot streamer + stop event matcher | done |
 | 3.1 | Metrics aggregation + grade engine + JSON output | todo |
 | 4.1 | Astro scaffold + methodology page | todo |
 | 4.2 | Homepage ranking table | todo |
