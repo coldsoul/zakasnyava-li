@@ -25,7 +25,8 @@ cd site && npm run build             # site build (requires public/data/*.json)
 
 # Pipeline entry-points
 python pipeline/build_stop_events.py --date YYYY-MM-DD
-python pipeline/compute_metrics.py --month YYYY-MM [--gtfs PATH]
+python pipeline/compute_metrics.py --month YYYY-MM [--gtfs PATH]   # single month
+python pipeline/compute_metrics.py --all-months [--gtfs PATH]       # all months (nightly uses this)
 ```
 
 ## Source of record — read before touching pipeline code

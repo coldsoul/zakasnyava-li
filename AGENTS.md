@@ -45,12 +45,13 @@ Nightly pipeline (03:10 Europe/Sofia):
   pipeline/build_stop_events.py --date YYYY-MM-DD
     → data/derived/stop_events.sqlite
 
-  pipeline/compute_metrics.py --month YYYY-MM
-    → site/public/data/index.json
-    → site/public/data/line/{id}.json
-    → site/public/data/feed_health.json
+  pipeline/compute_metrics.py --all-months
+    → site/public/data/months.json
+    → site/public/data/YYYY-MM/index.json
+    → site/public/data/YYYY-MM/line/{id}.json
+    → site/public/data/YYYY-MM/feed_health.json
 
-  astro build → site/dist/ → deployed static host
+  astro build → site/dist/ → orphan git push → gh-pages branch → GitHub Pages
 ```
 
 ## Feed quirks — normative, implement exactly, do not "fix"

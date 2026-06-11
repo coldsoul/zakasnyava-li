@@ -85,7 +85,7 @@ Rules:
   - Raw snapshots: `data/raw/YYYY-MM-DD/tripupdates/HHMMSS.pb.zst` (and `vehiclepositions/`, `alerts/`).
   - Static GTFS archive: `data/gtfs/YYYY-MM-DD.zip`.
   - Derived: `data/derived/stop_events.sqlite`.
-  - Published: `site/public/data/*.json`.
+  - Published: `site/public/data/months.json` + `site/public/data/YYYY-MM/{index,feed_health}.json` + `site/public/data/YYYY-MM/line/{id}.json`.
 - **Site:** Astro (static build) + Chart.js for charts. Plain CSS, no framework.
   Bulgarian UI text. No analytics, no cookies, no tracking — privacy-first like ms-navigator.bg.
 - **Hosting:** any static host (Cloudflare Pages / GitHub Pages / Netlify). Collector + nightly timer on a small VPS.
@@ -168,10 +168,10 @@ zakasnyava-li/
     src/pages/index.astro         # ranking
     src/pages/line/[id].astro     # line page (one per line+direction, prerendered)
     src/pages/methodology.astro
-    public/data/                  # generated JSON (gitignored)
+    public/data/                  # generated JSON (gitignored); months.json + YYYY-MM/ subdirs
   ops/
     nightly.sh            # batch entrypoint: fetch gtfs -> pipeline -> astro build -> deploy
-    systemd/              # collector.service, nightly.service, nightly.timer, notify@.service
+    systemd/              # collector.service, nightly.service, nightly.timer
   tests/
   data/                   # gitignored
   README.md
@@ -203,12 +203,13 @@ CREATE INDEX idx_se_route ON stop_events(route_id, direction_id, service_date);
 Published JSON (one file per line keeps pages cacheable):
 
 ```
-site/public/data/index.json       # ranking: [{line_id, name, type, median, p90,
-                                  #   served_pct, ontime_pct, score, grade, trend_mom, sample_n}]
-site/public/data/line/{id}.json   # {meta, per_direction: {0:{...},1:{...}},
-                                  #   distribution_buckets, heatmap[7][19],
-                                  #   weekly: [{week_start, median, p90}], caveats: []}
-site/public/data/feed_health.json # {days: [{date, snapshots_expected, snapshots_ok, pct}]}
+site/public/data/months.json            # ["YYYY-MM", ...] newest-first — drives month selector
+site/public/data/YYYY-MM/index.json     # ranking: [{line_id, name, type, median, p90,
+                                        #   served_pct, ontime_pct, score, grade, trend_mom, sample_n}]
+site/public/data/YYYY-MM/line/{id}.json # {meta, per_direction: {0:{...},1:{...}},
+                                        #   distribution_buckets, heatmap[7][19],
+                                        #   weekly: [{week_start, median, p90}], caveats: []}
+site/public/data/YYYY-MM/feed_health.json # {days: [{date, snapshots_expected, snapshots_ok, pct}]}
 ```
 
 Distribution buckets (fixed): `<−1 min`, `−1..2`, `2..5`, `5..10`, `10..15`, `15+` (minutes).
@@ -319,13 +320,13 @@ performance ≥ 95 on the line page; no external requests except self + cdn for 
 ### Story 5 — Nightly orchestration, observability & deploy
 
 `ops/nightly.sh`: fetch static GTFS → build yesterday's stop events → recompute
-current month metrics → `astro build` → deploy (rsync or Pages CLI). On any failure,
-exit nonzero; on success, ping the dead man's switch as the **last** step.
+all months metrics (`--all-months`) → `astro build` → deploy via orphan git push to
+`gh-pages` branch. On any failure, exit nonzero; on success, ping the dead man's
+switch as the **last** step.
 
 Scheduling: `nightly.timer` + `nightly.service` (systemd, **not crontab**) with
 `OnCalendar=*-*-* 03:10:00 Europe/Sofia`, `Persistent=true` (missed runs execute
-after reboot), and `OnFailure=notify@%n.service` sending a single one-line
-notification (ntfy.sh or email). systemd's default behavior prevents overlapping runs.
+after reboot). systemd's default behavior prevents overlapping runs.
 
 Implement all of §8. Document VPS setup in README: unit files, timer, node_exporter
 textfile collector path, dead man's switch URL configuration, disk monitoring with
