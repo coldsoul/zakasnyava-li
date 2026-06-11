@@ -44,7 +44,7 @@ Tested on Ubuntu 22.04 LTS. Minimum: 1 vCPU, 1 GB RAM, 40 GB disk.
 ```bash
 sudo apt update
 sudo apt install -y git python3-pip rsync nodejs npm \
-    prometheus-node-exporter
+    prometheus-node-exporter curl
 ```
 
 Enable the textfile collector for node_exporter:
@@ -70,15 +70,19 @@ sudo systemctl daemon-reload && sudo systemctl restart prometheus-node-exporter
 ### 2. Create service user and directories
 
 ```bash
-sudo useradd -r -s /usr/sbin/nologin zakasnyava
+# Create service user with a home dir (needed for SSH keys)
+sudo mkdir -p /var/lib/zakasnyava-li/home
+sudo useradd -r -s /usr/sbin/nologin \
+    -d /var/lib/zakasnyava-li/home zakasnyava
+
 sudo mkdir -p /opt/zakasnyava-li \
     /var/lib/zakasnyava-li/data/derived \
     /var/lib/zakasnyava-li/data/gtfs \
     /etc/zakasnyava-li \
-    /var/www/html/zakasnyava-li \
     /var/lib/node_exporter/textfile_collector
+
 sudo chown -R zakasnyava:zakasnyava \
-    /opt/zakasnyava-li /var/lib/zakasnyava-li /var/www/html/zakasnyava-li
+    /opt/zakasnyava-li /var/lib/zakasnyava-li
 sudo chown zakasnyava:zakasnyava /var/lib/node_exporter/textfile_collector
 ```
 
@@ -94,7 +98,52 @@ sudo -u zakasnyava .venv/bin/uv sync
 cd site && sudo -u zakasnyava npm ci
 ```
 
-### 4. Secrets file
+### 4. SSH deploy key (GitHub Pages push)
+
+The nightly pipeline pushes `site/dist/` to the `gh-pages` branch. The
+`zakasnyava` user needs write access to the repo via an SSH deploy key.
+
+**On the VPS:**
+
+```bash
+# Generate deploy key (no passphrase — runs unattended in systemd)
+sudo -u zakasnyava ssh-keygen -t ed25519 \
+    -f /var/lib/zakasnyava-li/home/.ssh/gh_deploy \
+    -C "zakasnyava-li nightly deploy" \
+    -N ""
+
+# Configure SSH to use this key for github.com
+sudo -u zakasnyava tee /var/lib/zakasnyava-li/home/.ssh/config > /dev/null <<'EOF'
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile /var/lib/zakasnyava-li/home/.ssh/gh_deploy
+  StrictHostKeyChecking yes
+EOF
+sudo chmod 600 /var/lib/zakasnyava-li/home/.ssh/config
+
+# Print the public key — you'll paste this into GitHub next
+sudo cat /var/lib/zakasnyava-li/home/.ssh/gh_deploy.pub
+```
+
+**On GitHub** — `Settings → Deploy keys → Add deploy key`:
+- Title: `vps-nightly-deploy`
+- Key: paste the public key printed above
+- Check **Allow write access** ✓
+- Click **Add key**
+
+**Back on the VPS** — switch remote to SSH and verify:
+
+```bash
+# Switch from HTTPS to SSH remote
+sudo -u zakasnyava git -C /opt/zakasnyava-li remote set-url origin \
+    git@github.com:coldsoul/zakasnyava-li.git
+
+# Test — should print "Hi coldsoul/zakasnyava-li! You've successfully authenticated"
+sudo -u zakasnyava ssh -T git@github.com
+```
+
+### 5. Secrets file
 
 Create `/etc/zakasnyava-li/secrets.env` (not committed to git, mode 640):
 
@@ -111,7 +160,7 @@ sudo chmod 640 /etc/zakasnyava-li/secrets.env
 sudo chown root:zakasnyava /etc/zakasnyava-li/secrets.env
 ```
 
-### 5. Install systemd units
+### 6. Install systemd units
 
 ```bash
 sudo cp /opt/zakasnyava-li/ops/systemd/*.service /etc/systemd/system/
@@ -128,7 +177,7 @@ sudo systemctl enable --now nightly.timer
 systemctl list-timers nightly.timer
 ```
 
-### 6. Verify installation
+### 7. Verify installation
 
 ```bash
 # Collector is running
@@ -137,15 +186,17 @@ sudo systemctl status collector.service
 # Timer shows next scheduled run
 systemctl list-timers --all | grep nightly
 
-# Test nightly script manually (clears dead man's switch ping)
+# Test nightly script manually (suppresses dead man's switch ping)
 sudo -u zakasnyava DEADMAN_URL="" /opt/zakasnyava-li/ops/nightly.sh
 
 # Check prom metrics were written
 cat /var/lib/node_exporter/textfile_collector/nightly.prom
-cat /var/lib/node_exporter/textfile_collector/collector.prom
+
+# Verify gh-pages branch was pushed
+sudo -u zakasnyava git -C /opt/zakasnyava-li ls-remote origin gh-pages
 ```
 
-### 7. Disk monitoring
+### 8. Disk monitoring
 
 Add a systemd alert for disk usage ≥ 90 %:
 
@@ -178,7 +229,7 @@ EOF
 sudo systemctl daemon-reload && sudo systemctl enable --now disk-alert.timer
 ```
 
-### 8. Prometheus alert rules
+### 9. Prometheus alert rules
 
 If using Prometheus, add to `alerts.yml`:
 
@@ -201,7 +252,7 @@ groups:
           summary: "GTFS-RT feed not updated 10+ min during service hours"
 ```
 
-### 9. Updating
+### 10. Updating
 
 ```bash
 cd /opt/zakasnyava-li

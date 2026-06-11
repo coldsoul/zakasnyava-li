@@ -19,7 +19,6 @@ Environment=DATA_ROOT=/var/lib/zakasnyava-li/data
 Environment=DB_PATH=/var/lib/zakasnyava-li/data/derived/stop_events.sqlite
 Environment=SITE_DATA_DIR=/opt/zakasnyava-li/site/public/data
 Environment=PROM_DIR=/var/lib/node_exporter/textfile_collector
-Environment=DEPLOY_DEST=/var/www/html/zakasnyava-li
 Environment=PYTHON=/opt/zakasnyava-li/.venv/bin/python
 Environment=TZ=Europe/Sofia
 

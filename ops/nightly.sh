@@ -13,7 +13,7 @@ DATA_ROOT="${DATA_ROOT:-/var/lib/zakasnyava-li/data}"
 DB_PATH="${DB_PATH:-$DATA_ROOT/derived/stop_events.sqlite}"
 SITE_DATA_DIR="${SITE_DATA_DIR:-$REPO_DIR/site/public/data}"
 PROM_DIR="${PROM_DIR:-/var/lib/node_exporter/textfile_collector}"
-DEPLOY_DEST="${DEPLOY_DEST:-/var/www/html/zakasnyava-li}"
+GH_PAGES_REMOTE="${GH_PAGES_REMOTE:-}"   # overridable; defaults to repo's origin
 DEADMAN_URL="${DEADMAN_URL:-}"
 PYTHON="${PYTHON:-$REPO_DIR/.venv/bin/python}"
 NPM="${NPM:-npm}"
@@ -164,10 +164,27 @@ stage_start build
 (cd "${REPO_DIR}/site" && "${NPM}" run build)
 stage_end build
 
-# ── Stage 5: Deploy ──────────────────────────────────────────────────────────
+# ── Stage 5: Deploy to GitHub Pages ──────────────────────────────────────────
+
+_deploy_gh_pages() {
+    local remote work
+    remote="${GH_PAGES_REMOTE:-$(git -C "${REPO_DIR}" remote get-url origin)}"
+    work=$(mktemp -d)
+    trap "rm -rf '${work}'" RETURN
+
+    rsync -a --delete --exclude='.git' "${REPO_DIR}/site/dist/" "${work}/"
+    touch "${work}/.nojekyll"
+
+    git -C "${work}" init -b gh-pages
+    git -C "${work}" config user.email "nightly@zakasnyava-li.local"
+    git -C "${work}" config user.name "nightly"
+    git -C "${work}" add -A
+    git -C "${work}" commit -m "deploy ${TODAY}"
+    git -C "${work}" push --force "${remote}" HEAD:gh-pages
+}
 
 stage_start deploy
-rsync -a --delete "${REPO_DIR}/site/dist/" "${DEPLOY_DEST}/"
+_deploy_gh_pages
 stage_end deploy
 
 EXIT_STATUS=0
