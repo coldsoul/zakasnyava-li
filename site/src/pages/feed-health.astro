@@ -1,0 +1,54 @@
+---
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import Base from '../layouts/Base.astro';
+
+const DATA_DIR = resolve(process.cwd(), 'public', 'data');
+const healthPath = resolve(DATA_DIR, 'feed_health.json');
+
+interface DayHealth {
+  date: string;
+  snapshots_expected: number;
+  snapshots_ok: number;
+  pct: number | null;
+}
+
+const data: { days: DayHealth[] } = existsSync(healthPath)
+  ? JSON.parse(readFileSync(healthPath, 'utf-8'))
+  : { days: [] };
+
+function cellClass(pct: number | null): string {
+  if (pct === null) return '';
+  if (pct >= 95) return 'health-ok';
+  if (pct >= 70) return 'health-warn';
+  return 'health-bad';
+}
+---
+
+<Base title="Здраве на данните">
+  <div class="page-header">
+    <h1>Здраве на данните</h1>
+    <p class="subtitle">
+      Процент записани снимки на TripUpdates фийда за всеки ден (очаквани: 4 320 на ден = 1 на всеки 20 с).
+    </p>
+  </div>
+
+  {
+    data.days.length === 0 ? (
+      <p style="color: var(--text-muted);">Няма данни за текущия месец.</p>
+    ) : (
+      <div class="health-grid">
+        {data.days.map((d) => (
+          <div class={`health-cell ${cellClass(d.pct)}`}>
+            <span class="hc-date">{d.date.slice(5)}</span>
+            <span class="hc-pct">{d.pct !== null ? `${d.pct}%` : '—'}</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  <p style="margin-top:1.5rem;font-size:0.85rem;color:var(--text-muted);">
+    Зелено ≥ 95% · Жълто ≥ 70% · Червено &lt; 70%
+  </p>
+</Base>

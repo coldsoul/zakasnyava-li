@@ -40,6 +40,29 @@ jobs:
       - name: Run tests
         run: uv run pytest --tb=short
 
+  site:
+    name: Site build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: site/package-lock.json
+      - name: Install site dependencies
+        run: npm ci
+        working-directory: site
+      - name: Seed fixture data
+        run: |
+          mkdir -p site/public/data/line
+          cp tests/golden/index.json site/public/data/index.json
+          cp tests/golden/feed_health.json site/public/data/feed_health.json
+          cp tests/golden/line/R1.json site/public/data/line/R1.json
+      - name: Build site
+        run: npm run build
+        working-directory: site
+
   security:
     name: Security
     runs-on: ubuntu-latest
