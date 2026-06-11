@@ -21,6 +21,10 @@ uv run ruff check .        # lint
 uv run ruff format .       # format
 uv run bandit -r collector pipeline  # security scan
 cd site && npm ci && npm run build   # site build
+
+# Pipeline entry-points
+python pipeline/build_stop_events.py --date YYYY-MM-DD
+python pipeline/compute_metrics.py --month YYYY-MM [--gtfs PATH]
 ```
 
 ## Source of record — read before touching pipeline code

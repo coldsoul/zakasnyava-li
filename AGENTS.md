@@ -23,7 +23,7 @@ Branch naming: `epic/1-collector`, `epic/2-stop-events`, `epic/3-metrics`, `epic
 | 1.1 | Collector + systemd unit | done |
 | 2.1 | Static GTFS loader + DB schema | done |
 | 2.2 | Snapshot streamer + stop event matcher | done |
-| 3.1 | Metrics aggregation + grade engine + JSON output | todo |
+| 3.1 | Metrics aggregation + grade engine + JSON output | done |
 | 4.1 | Astro scaffold + methodology page | todo |
 | 4.2 | Homepage ranking table | todo |
 | 4.3 | Line page (charts, heatmap, weekly trend) | todo |

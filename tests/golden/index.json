@@ -1,0 +1,15 @@
+[
+  {
+    "grade": "C",
+    "line_id": "R1",
+    "median": 3.0,
+    "name": "R1",
+    "ontime_pct": 50.0,
+    "p90": 5.0,
+    "sample_n": 304,
+    "score": 60.8,
+    "served_pct": 100.0,
+    "trend_mom": null,
+    "type": "bus"
+  }
+]
