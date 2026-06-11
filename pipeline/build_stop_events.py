@@ -330,8 +330,8 @@ def find_gtfs_zip(service_date_str: str) -> Path:
 def build(service_date_str: str) -> int:
     snapshot_dir = DATA_ROOT / "raw" / service_date_str / "tripupdates"
     if not snapshot_dir.exists():
-        log.error(f"Snapshot directory not found: {snapshot_dir}")
-        sys.exit(1)
+        log.warning(f"Snapshot directory not found: {snapshot_dir} — skipping (no data collected yet)")
+        return 0
 
     gtfs_zip = find_gtfs_zip(service_date_str)
     log.info(f"Using GTFS: {gtfs_zip.name}")
