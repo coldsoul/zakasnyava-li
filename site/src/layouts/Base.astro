@@ -1,0 +1,36 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Надеждност на градския транспорт в София — изчислено от живите GTFS данни.' } =
+  Astro.props;
+---
+
+<!doctype html>
+<html lang="bg">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title} — Закъснява ли?</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a href="/" class="site-name">Закъснява ли?</a>
+      <nav>
+        <a href="/methodology/">Методология</a>
+        <a href="/feed-health/">Данни</a>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>Данните се актуализират всяка нощ. Без бисквитки и проследяване.</p>
+    </footer>
+  </body>
+</html>

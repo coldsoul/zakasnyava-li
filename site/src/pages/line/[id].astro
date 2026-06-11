@@ -1,0 +1,386 @@
+---
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import type { GetStaticPaths } from 'astro';
+import Base from '../../layouts/Base.astro';
+
+interface DirectionStats {
+  grade: string;
+  median: number | null;
+  p90: number | null;
+  served_pct: number | null;
+  ontime_pct: number | null;
+  score: number | null;
+  sample_n: number;
+  distribution_buckets: { label: string; count: number }[];
+  heatmap: (number | null)[][];
+  weekly: { week_start: string; median: number | null; p90: number | null }[];
+}
+
+interface LineData {
+  meta: { line_id: string; name: string; type: string };
+  per_direction: Record<string, DirectionStats>;
+  distribution_buckets: { label: string; count: number }[];
+  heatmap: (number | null)[][];
+  weekly: { week_start: string; median: number | null; p90: number | null }[];
+  caveats: { type: string; text: string }[];
+}
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const dataDir = resolve(process.cwd(), 'public', 'data');
+  const indexPath = resolve(dataDir, 'index.json');
+  if (!existsSync(indexPath)) return [];
+  const index: { line_id: string }[] = JSON.parse(readFileSync(indexPath, 'utf-8'));
+
+  const paths = [];
+  for (const row of index) {
+    const linePath = resolve(dataDir, 'line', `${row.line_id}.json`);
+    if (!existsSync(linePath)) continue;
+    const lineData: LineData = JSON.parse(readFileSync(linePath, 'utf-8'));
+    paths.push({ params: { id: row.line_id }, props: { lineData } });
+  }
+  return paths;
+};
+
+const { lineData } = Astro.props as { lineData: LineData };
+
+const TYPE_BG: Record<string, string> = {
+  bus: 'автобус',
+  tram: 'трамвай',
+  trolleybus: 'тролейбус',
+  metro: 'метро',
+};
+
+const VERDICTS: Record<string, string> = {
+  A: 'Линията работи отлично — закъсненията са редки и кратки.',
+  B: 'Линията работи добре — повечето пътувания са навреме или с минимално закъснение.',
+  C: 'Линията работи задоволително — закъсненията са чести, но умерени.',
+  D: 'Линията работи лошо — закъсненията са значителни и чести.',
+  E: 'Линията работи много лошо — закъсненията са сериозен проблем за пътниците.',
+  '—': 'Недостатъчно данни за оценка на тази линия.',
+};
+
+const GRADE_COLORS: Record<string, string> = {
+  A: 'var(--grade-a)',
+  B: 'var(--grade-b)',
+  C: 'var(--grade-c)',
+  D: 'var(--grade-d)',
+  E: 'var(--grade-e)',
+  '—': 'var(--grade-na)',
+};
+
+const BUCKET_LABELS: Record<string, string> = {
+  '<-1m': '< −1 мин',
+  '-1..2m': '−1 до +2 мин',
+  '2..5m': '2 до 5 мин',
+  '5..10m': '5 до 10 мин',
+  '10..15m': '10 до 15 мин',
+  '15+m': '> 15 мин',
+};
+
+const DAYS_BG = ['Пон', 'Вт', 'Ср', 'Чет', 'Пет', 'Съб', 'Нед'];
+const HOURS = Array.from({ length: 19 }, (_, i) => String(i + 5).padStart(2, '0'));
+
+function heatColor(val: number | null): string {
+  if (val === null) return '#d1d5db';
+  const t = Math.min(Math.max(val, 0) / 15, 1);
+  const h = Math.round(120 - 120 * t);
+  return `hsl(${h},65%,${Math.round(85 - 25 * t)}%)`;
+}
+
+function fmt(v: number | null, unit = ''): string {
+  return v !== null ? `${v}${unit}` : '—';
+}
+
+// Determine worse direction (lower score)
+const directions = Object.entries(lineData.per_direction);
+const scored = directions.filter(([, d]) => d.score !== null);
+const worseId =
+  scored.length > 0
+    ? scored.reduce((a, b) => ((a[1].score ?? 0) <= (b[1].score ?? 0) ? a : b))[0]
+    : (directions[0]?.[0] ?? '0');
+
+const worseStats = lineData.per_direction[worseId];
+const lineGrade = worseStats?.grade ?? '—';
+const verdictText = VERDICTS[lineGrade] ?? VERDICTS['—'];
+const gradeColor = GRADE_COLORS[lineGrade] ?? 'var(--grade-na)';
+
+const hasMultipleDirs = directions.length > 1;
+
+const distLabels = lineData.distribution_buckets.map((b) => BUCKET_LABELS[b.label] ?? b.label);
+const distValues = lineData.distribution_buckets.map((b) => b.count);
+const weeklyData = lineData.weekly;
+---
+
+<Base title={`Линия ${lineData.meta.name}`}>
+  <div class="page-header">
+    <h1>Линия {lineData.meta.name}</h1>
+    <p class="subtitle">
+      {TYPE_BG[lineData.meta.type] ?? lineData.meta.type}
+      &nbsp;·&nbsp;
+      <a href="/">← Всички линии</a>
+    </p>
+  </div>
+
+  <!-- Verdict -->
+  <div class="verdict">
+    <div class="verdict-grade" style={`color: ${gradeColor}`}>{lineGrade}</div>
+    <div class="verdict-text">{verdictText}</div>
+  </div>
+
+  <!-- Caveats -->
+  {lineData.caveats.map((c) => <div class="caveat">{c.text}</div>)}
+
+  <!-- Metric cards — single direction: no tabs -->
+  {
+    !hasMultipleDirs &&
+      directions.map(([, stats]) => (
+        <div class="cards">
+          <div class="card">
+            <div class="card-label">Медиана</div>
+            {stats.median !== null ? (
+              <>
+                <div class="card-value">{stats.median}</div>
+                <div class="card-unit">мин</div>
+              </>
+            ) : (
+              <div class="card-na">—</div>
+            )}
+          </div>
+          <div class="card">
+            <div class="card-label">P90</div>
+            {stats.p90 !== null ? (
+              <>
+                <div class="card-value">{stats.p90}</div>
+                <div class="card-unit">мин</div>
+              </>
+            ) : (
+              <div class="card-na">—</div>
+            )}
+          </div>
+          <div class="card">
+            <div class="card-label">Изпълнени</div>
+            {stats.served_pct !== null ? (
+              <>
+                <div class="card-value">{stats.served_pct}</div>
+                <div class="card-unit">%</div>
+              </>
+            ) : (
+              <div class="card-na">—</div>
+            )}
+          </div>
+          <div class="card">
+            <div class="card-label">Навреме [−1,+3 мин]</div>
+            {stats.ontime_pct !== null ? (
+              <>
+                <div class="card-value">{stats.ontime_pct}</div>
+                <div class="card-unit">%</div>
+              </>
+            ) : (
+              <div class="card-na">—</div>
+            )}
+          </div>
+        </div>
+      ))
+  }
+
+  <!-- Metric cards — multiple directions: tabs -->
+  {
+    hasMultipleDirs && (
+      <div class="dir-tabs">
+        <input type="radio" id="dir-tab-0" name="dir-tab" class="dir-tab-input" checked />
+        <input type="radio" id="dir-tab-1" name="dir-tab" class="dir-tab-input" />
+        <div class="tab-section">
+          <div class="tab-bar">
+            {directions.map(([dirId]) => (
+              <label for={`dir-tab-${dirId}`} class={`tab-label tab-label-${dirId}`}>
+                Посока {dirId}
+                {dirId === worseId && <span class="worse-tag">(по-слаба)</span>}
+              </label>
+            ))}
+          </div>
+          {directions.map(([dirId, stats]) => (
+            <div id={`panel-${dirId}`} class="tab-panel">
+              <div class="cards">
+                <div class="card">
+                  <div class="card-label">Медиана</div>
+                  {stats.median !== null ? (
+                    <>
+                      <div class="card-value">{stats.median}</div>
+                      <div class="card-unit">мин</div>
+                    </>
+                  ) : (
+                    <div class="card-na">—</div>
+                  )}
+                </div>
+                <div class="card">
+                  <div class="card-label">P90</div>
+                  {stats.p90 !== null ? (
+                    <>
+                      <div class="card-value">{stats.p90}</div>
+                      <div class="card-unit">мин</div>
+                    </>
+                  ) : (
+                    <div class="card-na">—</div>
+                  )}
+                </div>
+                <div class="card">
+                  <div class="card-label">Изпълнени</div>
+                  {stats.served_pct !== null ? (
+                    <>
+                      <div class="card-value">{stats.served_pct}</div>
+                      <div class="card-unit">%</div>
+                    </>
+                  ) : (
+                    <div class="card-na">—</div>
+                  )}
+                </div>
+                <div class="card">
+                  <div class="card-label">Навреме [−1,+3 мин]</div>
+                  {stats.ontime_pct !== null ? (
+                    <>
+                      <div class="card-value">{stats.ontime_pct}</div>
+                      <div class="card-unit">%</div>
+                    </>
+                  ) : (
+                    <div class="card-na">—</div>
+                  )}
+                </div>
+              </div>
+              <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;">
+                Извадка: {stats.sample_n} спирания ·{' '}
+                {stats.grade !== '—' ? (
+                  <>
+                    Оценка: <span class={`badge badge-${stats.grade}`}>{stats.grade}</span>
+                  </>
+                ) : (
+                  'Недостатъчно данни'
+                )}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  <!-- Distribution chart (worse direction) -->
+  <div class="chart-section">
+    <p class="section-title">Разпределение на закъсненията</p>
+    <div class="chart-wrap">
+      <canvas
+        id="dist-chart"
+        data-labels={JSON.stringify(distLabels)}
+        data-values={JSON.stringify(distValues)}
+        height="220"
+      ></canvas>
+    </div>
+  </div>
+
+  <!-- Heatmap (worse direction) -->
+  <div class="heatmap-section">
+    <p class="section-title">Медианно закъснение по час и ден от седмицата (мин)</p>
+    <div class="heatmap-wrap">
+      <div class="heatmap-grid">
+        <div class="hm-blank"></div>
+        {HOURS.map((h) => <div class="hm-hour">{h}</div>)}
+        {
+          lineData.heatmap.map((row, dayIdx) => (
+            <>
+              <div class="hm-day">{DAYS_BG[dayIdx]}</div>
+              {row.map((val) => (
+                <div
+                  class="hm-cell"
+                  style={`background:${heatColor(val)}`}
+                  title={val !== null ? `${val} мин` : 'няма данни (< 20 спирания)'}
+                ></div>
+              ))}
+            </>
+          ))
+        }
+      </div>
+    </div>
+    <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;">
+      Сиво = по-малко от 20 измервания. По-тъмен = по-голямо закъснение.
+    </p>
+  </div>
+
+  <!-- Weekly trend chart (worse direction) -->
+  {
+    weeklyData.length > 0 && (
+      <div class="chart-section">
+        <p class="section-title">Седмична тенденция (мин)</p>
+        <div class="chart-wrap">
+          <canvas id="weekly-chart" data-weeks={JSON.stringify(weeklyData)} height="220"></canvas>
+        </div>
+      </div>
+    )
+  }
+</Base>
+
+<script>
+  import Chart from 'chart.js/auto';
+
+  const distCanvas = document.getElementById('dist-chart') as HTMLCanvasElement | null;
+  if (distCanvas) {
+    const labels: string[] = JSON.parse(distCanvas.dataset.labels!);
+    const values: number[] = JSON.parse(distCanvas.dataset.values!);
+    new Chart(distCanvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Брой спирания',
+            data: values,
+            backgroundColor: '#6366f1',
+            borderRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } },
+      },
+    });
+  }
+
+  const weeklyCanvas = document.getElementById('weekly-chart') as HTMLCanvasElement | null;
+  if (weeklyCanvas) {
+    const weeks: { week_start: string; median: number | null; p90: number | null }[] = JSON.parse(
+      weeklyCanvas.dataset.weeks!,
+    );
+    new Chart(weeklyCanvas, {
+      type: 'line',
+      data: {
+        labels: weeks.map((w) => w.week_start),
+        datasets: [
+          {
+            label: 'Медиана',
+            data: weeks.map((w) => w.median),
+            borderColor: '#6366f1',
+            backgroundColor: 'transparent',
+            tension: 0.3,
+            pointRadius: 4,
+          },
+          {
+            label: 'P90',
+            data: weeks.map((w) => w.p90),
+            borderColor: '#ef4444',
+            backgroundColor: 'transparent',
+            tension: 0.3,
+            borderDash: [5, 5],
+            pointRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'минути' } },
+        },
+      },
+    });
+  }
+</script>
