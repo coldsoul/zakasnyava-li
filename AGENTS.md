@@ -20,7 +20,7 @@ Branch naming: `epic/1-collector`, `epic/2-stop-events`, `epic/3-metrics`, `epic
 | Bead | Description | Status |
 |------|-------------|--------|
 | 0.1 | Repo scaffold + CI | done |
-| 1.1 | Collector + systemd unit | todo |
+| 1.1 | Collector + systemd unit | done |
 | 2.1 | Static GTFS loader + DB schema | todo |
 | 2.2 | Snapshot streamer + stop event matcher | todo |
 | 3.1 | Metrics aggregation + grade engine + JSON output | todo |

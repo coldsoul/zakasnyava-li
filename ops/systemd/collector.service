@@ -1,0 +1,26 @@
+[Unit]
+Description=zakasnyava-li GTFS-RT collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=zakasnyava
+WorkingDirectory=/opt/zakasnyava-li
+ExecStart=/opt/zakasnyava-li/.venv/bin/python /opt/zakasnyava-li/collector/collector.py
+
+Restart=always
+RestartSec=5
+
+# Hardening — each entry maps to a spike failure (see docs/internal/RECON.md §5)
+MemoryMax=512M                  # spike peaked at 438 MB; restart on breach
+WatchdogSec=120                 # collector sends WATCHDOG=1 each cycle
+Environment=PYTHONUNBUFFERED=1  # prevent stdout block-buffering under journald
+Environment=DATA_ROOT=/var/lib/zakasnyava-li/data
+Environment=TEXTFILE_DIR=/var/lib/node_exporter/textfile_collector
+
+# Load secrets (DEADMAN_URL etc.) from a file not committed to the repo
+EnvironmentFile=-/etc/zakasnyava-li/secrets.env
+
+[Install]
+WantedBy=multi-user.target
