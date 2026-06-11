@@ -43,28 +43,7 @@ Tested on Ubuntu 22.04 LTS. Minimum: 1 vCPU, 1 GB RAM, 40 GB disk.
 
 ```bash
 sudo apt update
-sudo apt install -y git python3-pip rsync nodejs npm \
-    prometheus-node-exporter curl
-```
-
-Enable the textfile collector for node_exporter:
-
-```bash
-sudo mkdir -p /var/lib/node_exporter/textfile_collector
-sudo systemctl edit prometheus-node-exporter
-```
-
-Add to the override:
-
-```ini
-[Service]
-ExecStart=
-ExecStart=/usr/bin/prometheus-node-exporter \
-    --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
-```
-
-```bash
-sudo systemctl daemon-reload && sudo systemctl restart prometheus-node-exporter
+sudo apt install -y git python3-pip nodejs npm curl
 ```
 
 ### 2. Create service user and directories
@@ -78,12 +57,10 @@ sudo useradd -r -s /usr/sbin/nologin \
 sudo mkdir -p /opt/zakasnyava-li \
     /var/lib/zakasnyava-li/data/derived \
     /var/lib/zakasnyava-li/data/gtfs \
-    /etc/zakasnyava-li \
-    /var/lib/node_exporter/textfile_collector
+    /etc/zakasnyava-li
 
 sudo chown -R zakasnyava:zakasnyava \
     /opt/zakasnyava-li /var/lib/zakasnyava-li
-sudo chown zakasnyava:zakasnyava /var/lib/node_exporter/textfile_collector
 ```
 
 ### 3. Clone and install
@@ -229,9 +206,35 @@ EOF
 sudo systemctl daemon-reload && sudo systemctl enable --now disk-alert.timer
 ```
 
-### 9. Prometheus alert rules
+### 9. Prometheus metrics (optional)
 
-If using Prometheus, add to `alerts.yml`:
+Skip this section if not running Prometheus.
+
+Install and configure node_exporter to expose nightly pipeline metrics:
+
+```bash
+sudo apt install -y prometheus-node-exporter
+
+sudo mkdir -p /var/lib/node_exporter/textfile_collector
+sudo chown zakasnyava:zakasnyava /var/lib/node_exporter/textfile_collector
+
+sudo systemctl edit prometheus-node-exporter
+```
+
+Add to the override:
+
+```ini
+[Service]
+ExecStart=
+ExecStart=/usr/bin/prometheus-node-exporter \
+    --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
+```
+
+```bash
+sudo systemctl daemon-reload && sudo systemctl restart prometheus-node-exporter
+```
+
+Alert rules — add to `alerts.yml`:
 
 ```yaml
 groups:

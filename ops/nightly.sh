@@ -172,7 +172,7 @@ _deploy_gh_pages() {
     work=$(mktemp -d)
     trap "rm -rf '${work}'" RETURN
 
-    rsync -a --delete --exclude='.git' "${REPO_DIR}/site/dist/" "${work}/"
+    cp -a "${REPO_DIR}/site/dist/." "${work}/"
     touch "${work}/.nojekyll"
 
     git -C "${work}" init -b gh-pages
