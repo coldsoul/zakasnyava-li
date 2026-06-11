@@ -121,6 +121,7 @@ const distValues = lineData.distribution_buckets.map((b) => b.count);
 const weeklyData = lineData.weekly;
 
 const lineId = lineData.meta.line_id;
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
 <Base title={`Линия ${lineData.meta.name}`}>
@@ -129,7 +130,7 @@ const lineId = lineData.meta.line_id;
     <p class="subtitle">
       {TYPE_BG[lineData.meta.type] ?? lineData.meta.type}
       &nbsp;·&nbsp;
-      <a href="/">← Всички линии</a>
+      <a href={base}>← Всички линии</a>
       {months.length > 1 && (
         <>
           &nbsp;·&nbsp;
@@ -327,7 +328,7 @@ const lineId = lineData.meta.line_id;
 <script>
   import Chart from 'chart.js/auto';
 
-  const base = import.meta.env.BASE_URL;
+  const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
   const VERDICTS: Record<string, string> = {
     A: 'Линията работи отлично — закъсненията са редки и кратки.',

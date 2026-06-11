@@ -58,6 +58,8 @@ const TYPE_BG: Record<string, string> = {
   trolleybus: 'тролейбус',
   metro: 'метро',
 };
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
 <Base title="Начало">
@@ -101,7 +103,7 @@ const TYPE_BG: Record<string, string> = {
             {rows.map((row) => (
               <tr>
                 <td class="td-line">
-                  <a href={`/line/${row.line_id}/`}>{row.name}</a>
+                  <a href={`${base}line/${row.line_id}/`}>{row.name}</a>
                 </td>
                 <td>
                   {TYPE_BG[row.type] ?? row.type}
@@ -136,12 +138,12 @@ const TYPE_BG: Record<string, string> = {
 
   <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
     Класацията е наредена от най-слабата към най-добрата линия.
-    <a href="/methodology/">Методология →</a>
+    <a href={`${base}methodology/`}>Методология →</a>
   </p>
 </Base>
 
 <script>
-  const base = import.meta.env.BASE_URL;
+  const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
   const sel = document.getElementById('month-sel') as HTMLSelectElement | null;
   if (!sel) {
     // Single month — nothing to switch
