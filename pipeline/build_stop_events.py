@@ -36,22 +36,7 @@ log = logging.getLogger("build_stop_events")
 
 _dctx = zstd.ZstdDecompressor()
 
-_SCHEMA_SQL = """
-CREATE TABLE IF NOT EXISTS stop_events (
-  service_date  TEXT     NOT NULL,
-  route_id      TEXT     NOT NULL,
-  direction_id  INTEGER  NOT NULL,
-  trip_id       TEXT     NOT NULL,
-  stop_id       TEXT     NOT NULL,
-  stop_sequence INTEGER  NOT NULL,
-  scheduled_ts  INTEGER  NOT NULL,
-  delay_sec     INTEGER,
-  is_ghost      INTEGER  NOT NULL DEFAULT 0,
-  PRIMARY KEY (service_date, trip_id, stop_sequence)
-);
-CREATE INDEX IF NOT EXISTS idx_se_route
-  ON stop_events (route_id, direction_id, service_date);
-"""
+_SCHEMA_SQL = (Path(__file__).parent / "schemas.sql").read_text()
 
 
 class StopTimeRow(NamedTuple):
