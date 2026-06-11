@@ -141,11 +141,8 @@ Create `/etc/zakasnyava-li/secrets.env` (not committed to git, mode 640):
 ```bash
 sudo tee /etc/zakasnyava-li/secrets.env > /dev/null <<'EOF'
 # Dead man's switch — ping on every successful nightly run
-# Free check at https://healthchecks.io or self-hosted Uptime Kuma
+# Free tier at https://healthchecks.io or self-hosted Uptime Kuma
 DEADMAN_URL=https://hc-ping.com/YOUR-UUID-HERE
-
-# ntfy.sh topic for failure notifications (used by notify@.service)
-NTFY_URL=https://ntfy.sh/YOUR-TOPIC-HERE
 EOF
 sudo chmod 640 /etc/zakasnyava-li/secrets.env
 sudo chown root:zakasnyava /etc/zakasnyava-li/secrets.env
@@ -187,40 +184,7 @@ cat /var/lib/node_exporter/textfile_collector/nightly.prom
 sudo -u zakasnyava git -C /opt/zakasnyava-li ls-remote origin gh-pages
 ```
 
-### 8. Disk monitoring
-
-Add a systemd alert for disk usage ≥ 90 %:
-
-```bash
-sudo tee /etc/systemd/system/disk-alert.service > /dev/null <<'EOF'
-[Unit]
-Description=Disk usage alert
-
-[Service]
-Type=oneshot
-EnvironmentFile=-/etc/zakasnyava-li/secrets.env
-ExecStart=/usr/bin/bash -c '\
-    PCT=$(df /var/lib/zakasnyava-li --output=pcent | tail -1 | tr -d " %"); \
-    [ "$PCT" -ge 90 ] && \
-    curl -fsS -d "Disk at ${PCT}%% on $(hostname)" "$NTFY_URL" || true'
-EOF
-
-sudo tee /etc/systemd/system/disk-alert.timer > /dev/null <<'EOF'
-[Unit]
-Description=Disk usage alert timer
-
-[Timer]
-OnCalendar=hourly
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-EOF
-
-sudo systemctl daemon-reload && sudo systemctl enable --now disk-alert.timer
-```
-
-### 9. Prometheus metrics (optional)
+### 8. Prometheus metrics (optional)
 
 Skip this section if not running Prometheus.
 
@@ -269,7 +233,7 @@ groups:
           summary: "GTFS-RT feed not updated 10+ min during service hours"
 ```
 
-### 10. Updating
+### 9. Updating
 
 ```bash
 cd /opt/zakasnyava-li

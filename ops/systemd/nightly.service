@@ -3,7 +3,6 @@ Description=zakasnyava-li nightly pipeline
 Documentation=https://github.com/coldsoul/zakasnyava-li
 After=network-online.target
 Wants=network-online.target
-OnFailure=notify@%n.service
 
 [Service]
 Type=oneshot
@@ -22,7 +21,7 @@ Environment=PROM_DIR=/var/lib/node_exporter/textfile_collector
 Environment=PYTHON=/opt/zakasnyava-li/.venv/bin/python
 Environment=TZ=Europe/Sofia
 
-# Load DEADMAN_URL and other secrets — file is not committed to the repo
+# Load DEADMAN_URL from secrets — file is not committed to the repo
 EnvironmentFile=-/etc/zakasnyava-li/secrets.env
 
 StandardOutput=journal
