@@ -484,7 +484,9 @@ def compute(
     index_rows.sort(key=lambda r: r["score"] or 0.0)
 
     write_json(site_data_dir / month_str / "index.json", index_rows)
-    write_json(site_data_dir / month_str / "feed_health.json", build_feed_health(month_str, data_root))
+    write_json(
+        site_data_dir / month_str / "feed_health.json", build_feed_health(month_str, data_root)
+    )
 
     return {"lines_graded": len(index_rows)}
 
