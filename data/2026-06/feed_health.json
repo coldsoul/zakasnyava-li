@@ -1,0 +1,16 @@
+{
+  "days": [
+    {
+      "date": "2026-06-11",
+      "pct": 52.9,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 2284
+    },
+    {
+      "date": "2026-06-12",
+      "pct": 96.8,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4183
+    }
+  ]
+}

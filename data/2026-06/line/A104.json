@@ -1,0 +1,388 @@
+{
+  "caveats": [
+    {
+      "text": "Честа линия — точността спрямо разписание е по-малко показателна.",
+      "type": "frequent_line"
+    }
+  ],
+  "distribution_buckets": [
+    {
+      "count": 264,
+      "label": "<-1m"
+    },
+    {
+      "count": 4619,
+      "label": "-1..2m"
+    },
+    {
+      "count": 1211,
+      "label": "2..5m"
+    },
+    {
+      "count": 441,
+      "label": "5..10m"
+    },
+    {
+      "count": 117,
+      "label": "10..15m"
+    },
+    {
+      "count": 60,
+      "label": "15+m"
+    }
+  ],
+  "heatmap": [
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      0.6,
+      0.9,
+      3.9,
+      3.0,
+      0.6,
+      0.7,
+      0.9,
+      0.8,
+      0.2
+    ],
+    [
+      0.4,
+      0.3,
+      0.5,
+      1.8,
+      1.1,
+      0.7,
+      0.7,
+      0.3,
+      1.2,
+      1.0,
+      0.6,
+      0.7,
+      3.1,
+      4.7,
+      0.4,
+      0.1,
+      0.5,
+      0.0,
+      -0.1
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "meta": {
+    "line_id": "A104",
+    "name": "27",
+    "type": "bus"
+  },
+  "per_direction": {
+    "0": {
+      "distribution_buckets": [
+        {
+          "count": 264,
+          "label": "<-1m"
+        },
+        {
+          "count": 4619,
+          "label": "-1..2m"
+        },
+        {
+          "count": 1211,
+          "label": "2..5m"
+        },
+        {
+          "count": 441,
+          "label": "5..10m"
+        },
+        {
+          "count": 117,
+          "label": "10..15m"
+        },
+        {
+          "count": 60,
+          "label": "15+m"
+        }
+      ],
+      "grade": "D",
+      "heatmap": [
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          0.6,
+          0.9,
+          3.9,
+          3.0,
+          0.6,
+          0.7,
+          0.9,
+          0.8,
+          0.2
+        ],
+        [
+          0.4,
+          0.3,
+          0.5,
+          1.8,
+          1.1,
+          0.7,
+          0.7,
+          0.3,
+          1.2,
+          1.0,
+          0.6,
+          0.7,
+          3.1,
+          4.7,
+          0.4,
+          0.1,
+          0.5,
+          0.0,
+          -0.1
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "median": 0.8,
+      "ontime_pct": 78.3,
+      "p90": 4.7,
+      "sample_n": 6712,
+      "score": 43.4,
+      "served_pct": 42.7,
+      "weekly": [
+        {
+          "median": 0.8,
+          "p90": 4.7,
+          "week_start": "2026-06-08"
+        }
+      ]
+    }
+  },
+  "weekly": [
+    {
+      "median": 0.8,
+      "p90": 4.7,
+      "week_start": "2026-06-08"
+    }
+  ]
+}
