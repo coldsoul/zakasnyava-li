@@ -27,3 +27,4 @@ ops/secrets.env
 *.db
 .beads-credential-key
 .beads/proxieddb/
+.superpowers/

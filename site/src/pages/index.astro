@@ -79,6 +79,20 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
     </div>
   </div>
 
+  {rows.length > 0 && (
+    <div class="filter-bar" id="filter-bar">
+      <div class="type-chips" id="type-chips">
+        <button class="chip active" data-type="all">Всички</button>
+        <button class="chip" data-type="bus">автобус</button>
+        <button class="chip" data-type="metro">метро</button>
+        <button class="chip" data-type="tram">трамвай</button>
+        <button class="chip" data-type="trolleybus">тролей</button>
+      </div>
+      <input class="search-input" id="line-search" type="search"
+             placeholder="Линия…" aria-label="Търсене на линия" />
+    </div>
+  )}
+
   {
     rows.length === 0 ? (
       <p style="color: var(--text-muted); margin-top: 2rem;">
@@ -142,66 +156,163 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
   </p>
 </Base>
 
-<script>
-  const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
-  const sel = document.getElementById('month-sel') as HTMLSelectElement | null;
-  if (!sel) {
-    // Single month — nothing to switch
-  } else {
-    const latestMonth = sel.dataset.latest ?? '';
+<script define:vars={{ initialRows: rows, latestMonth, base }}>
 
-    const TYPE_BG: Record<string, string> = {
-      bus: 'автобус',
-      tram: 'трамвай',
-      trolleybus: 'тролейбус',
-      metro: 'метро',
-    };
 
-    function fmtMonth(m: string): string {
-      return new Date(m + '-02').toLocaleDateString('bg-BG', { month: 'long', year: 'numeric' });
-    }
+  const TYPE_BG = {
+    bus: 'автобус',
+    tram: 'трамвай',
+    trolleybus: 'тролейбус',
+    metro: 'метро',
+  };
 
-    function trendStr(t: number | null): string {
-      if (t === null) return '—';
-      if (t > 0.05) return `+${t.toFixed(1)}`;
-      if (t < -0.05) return t.toFixed(1);
-      return '±0';
-    }
+  const state = {
+    rows: initialRows,
+    month: latestMonth,
+    activeType: 'all',
+    query: '',
+  };
 
-    function trendCls(t: number | null): string {
-      if (t === null) return 'trend-flat';
-      if (t > 0.05) return 'trend-up';
-      if (t < -0.05) return 'trend-dn';
-      return 'trend-flat';
-    }
+  function fmtMonth(m) {
+    return new Date(m + '-02').toLocaleDateString('bg-BG', { month: 'long', year: 'numeric' });
+  }
 
-    function rowHtml(row: any, month: string): string {
-      const g = row.grade === '—' ? 'na' : row.grade;
-      const monthSuffix = month !== latestMonth ? `?month=${month}` : '';
-      return `<tr>
-        <td class="td-line"><a href="${base}line/${row.line_id}/${monthSuffix}">${row.name}</a></td>
-        <td>${TYPE_BG[row.type] ?? row.type}</td>
-        <td class="td-num">${row.median !== null ? row.median + ' мин' : '—'}</td>
-        <td class="td-num col-p90">${row.p90 !== null ? row.p90 + ' мин' : '—'}</td>
-        <td class="td-num col-served">${row.served_pct !== null ? row.served_pct + '%' : '—'}</td>
-        <td class="td-num">${row.ontime_pct !== null ? row.ontime_pct + '%' : '—'}</td>
-        <td class="td-num ${trendCls(row.trend_mom)}">${trendStr(row.trend_mom)}</td>
-        <td class="td-grade"><span class="badge badge-${g}">${row.grade}</span></td>
-      </tr>`;
-    }
+  function trendStr(t) {
+    if (t === null) return '—';
+    if (t > 0.05) return `+${t.toFixed(1)}`;
+    if (t < -0.05) return t.toFixed(1);
+    return '±0';
+  }
 
+  function trendCls(t) {
+    if (t === null) return 'trend-flat';
+    if (t > 0.05) return 'trend-up';
+    if (t < -0.05) return 'trend-dn';
+    return 'trend-flat';
+  }
+
+  function rowHtml(row, month) {
+    const g = row.grade === '—' ? 'na' : row.grade;
+    const monthSuffix = month !== latestMonth ? `?month=${month}` : '';
+    return `<tr>
+      <td class="td-line"><a href="${base}line/${row.line_id}/${monthSuffix}">${row.name}</a></td>
+      <td>${TYPE_BG[row.type] ?? row.type}</td>
+      <td class="td-num">${row.median !== null ? row.median + ' мин' : '—'}</td>
+      <td class="td-num col-p90">${row.p90 !== null ? row.p90 + ' мин' : '—'}</td>
+      <td class="td-num col-served">${row.served_pct !== null ? row.served_pct + '%' : '—'}</td>
+      <td class="td-num">${row.ontime_pct !== null ? row.ontime_pct + '%' : '—'}</td>
+      <td class="td-num ${trendCls(row.trend_mom)}">${trendStr(row.trend_mom)}</td>
+      <td class="td-grade"><span class="badge badge-${g}">${row.grade}</span></td>
+    </tr>`;
+  }
+
+  function filteredRows() {
+    const q = state.query.toLowerCase().trim();
+    return state.rows.filter((r) => {
+      const typeMatch = state.activeType === 'all' || r.type === state.activeType;
+      const nameMatch = !q || r.name.toLowerCase().includes(q);
+      return typeMatch && nameMatch;
+    });
+  }
+
+  function render() {
+    const tbody = document.querySelector('#ranking-table tbody');
+    if (!tbody) return;
+    const filtered = filteredRows();
+    tbody.innerHTML = filtered.length
+      ? filtered.map((r) => rowHtml(r, state.month)).join('')
+      : '<tr><td colspan="8" class="empty-state">Няма линии.</td></tr>';
+  }
+
+  function setType(type) {
+    state.activeType = type;
+    document.querySelectorAll('#type-chips .chip').forEach((c) =>
+      c.classList.toggle('active', c.dataset.type === type)
+    );
+    render();
+  }
+
+  // Category chips
+  document.querySelectorAll('#type-chips .chip').forEach((chip) => {
+    chip.addEventListener('click', () => setType(chip.dataset.type));
+  });
+
+  // Search
+  let searchTimer;
+  const searchEl = document.getElementById('line-search');
+  if (searchEl) {
+    searchEl.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        state.query = searchEl.value;
+        render();
+      }, 150);
+    });
+  }
+
+  // Month switcher
+  const sel = document.getElementById('month-sel');
+  if (sel) {
     sel.addEventListener('change', async () => {
       const month = sel.value;
       const heading = document.getElementById('ranking-month');
       if (heading) heading.textContent = fmtMonth(month);
-
-      const table = document.getElementById('ranking-table');
-      const tbody = table?.querySelector('tbody');
-      if (!tbody) return;
-
       const res = await fetch(`${base}data/${month}/index.json`);
-      const rows: any[] = await res.json();
-      tbody.innerHTML = rows.map((r) => rowHtml(r, month)).join('');
+      state.rows = await res.json();
+      state.month = month;
+      render();
     });
   }
+
+  // Initial render (JS takes over from SSR)
+  render();
 </script>
+
+<style>
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+    flex-wrap: wrap;
+  }
+
+  .type-chips {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 3px 12px;
+  }
+
+  .chip.active {
+    background: #eef2ff;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .search-input {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: inherit;
+    font-size: 0.85rem;
+    margin-left: auto;
+    padding: 3px 8px;
+    width: 9rem;
+  }
+
+  .empty-state {
+    color: var(--text-muted);
+    padding: 2rem;
+    text-align: center;
+  }
+</style>
