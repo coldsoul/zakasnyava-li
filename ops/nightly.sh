@@ -119,6 +119,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# ── Stage 0: Pull latest code ────────────────────────────────────────────────
+
+git -C "${REPO_DIR}" pull --ff-only
+
 # ── Stage 1: Fetch static GTFS ───────────────────────────────────────────────
 
 stage_start fetch_gtfs
