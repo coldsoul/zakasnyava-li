@@ -8,15 +8,15 @@ export TZ="Europe/Sofia"
 
 # ── Configuration (override via EnvironmentFile in nightly.service) ──────────
 
-REPO_DIR="${REPO_DIR:-/opt/zakasnyava-li}"
-DATA_ROOT="${DATA_ROOT:-/var/lib/zakasnyava-li/data}"
-DB_PATH="${DB_PATH:-$DATA_ROOT/derived/stop_events.sqlite}"
-SITE_DATA_DIR="${SITE_DATA_DIR:-$REPO_DIR/site/public/data}"
-PROM_DIR="${PROM_DIR:-/var/lib/node_exporter/textfile_collector}"
-GH_PAGES_REMOTE="${GH_PAGES_REMOTE:-}"   # overridable; defaults to repo's origin
-DEADMAN_URL="${DEADMAN_URL:-}"
-PYTHON="${PYTHON:-$REPO_DIR/.venv/bin/python}"
-NPM="${NPM:-npm}"
+export REPO_DIR="${REPO_DIR:-/opt/zakasnyava-li}"
+export DATA_ROOT="${DATA_ROOT:-/var/lib/zakasnyava-li/data}"
+export DB_PATH="${DB_PATH:-$DATA_ROOT/derived/stop_events.sqlite}"
+export SITE_DATA_DIR="${SITE_DATA_DIR:-$REPO_DIR/site/public/data}"
+export PROM_DIR="${PROM_DIR:-/var/lib/node_exporter/textfile_collector}"
+export GH_PAGES_REMOTE="${GH_PAGES_REMOTE:-}"   # overridable; defaults to repo's origin
+export DEADMAN_URL="${DEADMAN_URL:-}"
+export PYTHON="${PYTHON:-$REPO_DIR/.venv/bin/python}"
+export NPM="${NPM:-npm}"
 
 # ── State ────────────────────────────────────────────────────────────────────
 
