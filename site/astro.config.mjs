@@ -1,8 +1,8 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://coldsoul.github.io',
-  base: '/zakasnyava-li',
+  site: 'https://sofiaontime.com',
+  base: '/',
   output: 'static',
   build: {
     format: 'directory',
