@@ -2,7 +2,7 @@
 """Compute per-line reliability metrics for one calendar month.
 
 Usage:
-    python pipeline/compute_metrics.py --month YYYY-MM [--gtfs PATH]
+    python pipeline/compute_metrics.py --month YYYY-MM [--gtfs PATH] [--source tu|vp|merged]
 """
 
 import argparse
@@ -190,6 +190,76 @@ def load_direction_events(
     )
 
 
+def load_direction_events_vp(
+    db_path: Path, route_id: str, direction_id: int, start: str, end: str
+) -> list:
+    """Load events from vehicle_arrivals table (VP GPS-derived delays).
+
+    All VP rows have is_ghost=0 since VP only records observed arrivals.
+    Ghost detection for VP-only mode requires comparing against active trips,
+    which is handled by the merged mode instead.
+    """
+    return _query(
+        db_path,
+        "SELECT trip_id, stop_sequence, scheduled_ts, delay_sec, 0 AS is_ghost "
+        "FROM vehicle_arrivals "
+        "WHERE route_id = ? AND direction_id = ? AND service_date BETWEEN ? AND ?",
+        (route_id, direction_id, start, end),
+    )
+
+
+def load_direction_events_merged(
+    db_path: Path, route_id: str, direction_id: int, start: str, end: str
+) -> list:
+    """Load events preferring VP (vehicle_arrivals), falling back to TU (stop_events).
+
+    Uses a UNION query: VP rows always included, TU rows only when VP doesn't cover
+    the same (trip_id, stop_sequence). This handles ghost disproval naturally:
+    if VP has an arrival for a trip that TU marked as ghost, VP wins.
+    """
+    return _query(
+        db_path,
+        """
+        SELECT trip_id, stop_sequence, scheduled_ts, delay_sec, is_ghost FROM (
+            SELECT trip_id, stop_sequence, scheduled_ts, delay_sec, 0 AS is_ghost
+            FROM vehicle_arrivals
+            WHERE route_id = ? AND direction_id = ? AND service_date BETWEEN ? AND ?
+            UNION ALL
+            SELECT se.trip_id, se.stop_sequence, se.scheduled_ts,
+                   se.delay_sec, se.is_ghost
+            FROM stop_events se
+            WHERE se.route_id = ? AND se.direction_id = ?
+              AND se.service_date BETWEEN ? AND ?
+              AND NOT EXISTS (
+                  SELECT 1 FROM vehicle_arrivals va
+                  WHERE va.service_date = se.service_date
+                    AND va.trip_id = se.trip_id
+                    AND va.stop_sequence = se.stop_sequence
+                    AND va.actual_arrival IS NOT NULL
+              )
+        )
+        """,
+        (route_id, direction_id, start, end, route_id, direction_id, start, end),
+    )
+
+
+def get_routes_merged(db_path: Path, start: str, end: str) -> list:
+    """Return distinct (route_id, direction_id) from both tables."""
+    return [
+        (r["route_id"], r["direction_id"])
+        for r in _query(
+            db_path,
+            "SELECT route_id, direction_id FROM vehicle_arrivals "
+            "WHERE service_date BETWEEN ? AND ? "
+            "UNION "
+            "SELECT route_id, direction_id FROM stop_events "
+            "WHERE service_date BETWEEN ? AND ? "
+            "ORDER BY route_id, direction_id",
+            (start, end, start, end),
+        )
+    ]
+
+
 def is_frequent(db_path: Path, route_id: str, direction_id: int, start: str, end: str) -> bool:
     """True if median gap between consecutive trip departures (same day) ≤ FREQ_HEADWAY_SEC."""
     rows = _query(
@@ -367,13 +437,14 @@ def compute_all(
     data_root: Path = DATA_ROOT,
     site_data_dir: Path = SITE_DATA_DIR,
     gtfs_zip: "Path | None" = None,
+    source: str = "tu",
 ) -> dict:
     if gtfs_zip is None:
         gtfs_zip = _find_gtfs(data_root)
     months = get_all_months(db_path)
     by_month: dict[str, int] = {}
     for month_str in months:
-        r = compute(month_str, db_path, data_root, site_data_dir, gtfs_zip)
+        r = compute(month_str, db_path, data_root, site_data_dir, gtfs_zip, source=source)
         by_month[month_str] = r["lines_graded"]
     months_sorted = sorted(months, reverse=True)
     write_json(site_data_dir / "months.json", months_sorted)
@@ -391,6 +462,7 @@ def compute(
     data_root: Path = DATA_ROOT,
     site_data_dir: Path = SITE_DATA_DIR,
     gtfs_zip: Path | None = None,
+    source: str = "tu",
 ) -> dict:
     if not db_path.exists():
         raise FileNotFoundError(f"Database not found: {db_path}")
@@ -403,8 +475,19 @@ def compute(
     prev_ms = prev_month(month_str)
     prev_start, prev_end = month_bounds(prev_ms)
 
+    # Select loader and route discovery based on source
+    if source == "vp":
+        loader = load_direction_events_vp
+        routes = get_routes(db_path, start, end)  # TODO: VP-only route discovery
+    elif source == "merged":
+        loader = load_direction_events_merged
+        routes = get_routes_merged(db_path, start, end)
+    else:
+        loader = load_direction_events
+        routes = get_routes(db_path, start, end)
+
     by_route: dict[str, list] = defaultdict(list)
-    for route_id, direction_id in get_routes(db_path, start, end):
+    for route_id, direction_id in routes:
         by_route[route_id].append(direction_id)
 
     index_rows = []
@@ -413,7 +496,7 @@ def compute(
         dir_ids = by_route[route_id]
         directions: list[tuple[int, dict]] = []
         for direction_id in dir_ids:
-            evs = load_direction_events(db_path, route_id, direction_id, start, end)
+            evs = loader(db_path, route_id, direction_id, start, end)
             stats = compute_direction_stats(evs, month_str)
             directions.append((direction_id, stats))
 
@@ -457,7 +540,7 @@ def compute(
         if worse["median"] is not None:
             prev_medians = []
             for direction_id in dir_ids:
-                pevs = load_direction_events(db_path, route_id, direction_id, prev_start, prev_end)
+                pevs = loader(db_path, route_id, direction_id, prev_start, prev_end)
                 pm = [e for e in pevs if not e["is_ghost"] and e["delay_sec"] is not None]
                 if len(pm) >= MIN_SAMPLE:
                     pd_sorted = sorted(e["delay_sec"] for e in pm)
@@ -496,6 +579,12 @@ if __name__ == "__main__":
     ap.add_argument("--month", help="Month YYYY-MM")
     ap.add_argument("--all-months", action="store_true", help="Compute all months in DB")
     ap.add_argument("--gtfs", type=Path, help="GTFS zip path (auto-detected if omitted)")
+    ap.add_argument(
+        "--source",
+        choices=["tu", "vp", "merged"],
+        default="tu",
+        help="Data source: tu (TripUpdates, default), vp (VehiclePositions), merged (VP + TU fallback)",
+    )
     args = ap.parse_args()
 
     if not args.all_months and not args.month:
@@ -505,9 +594,9 @@ if __name__ == "__main__":
         args.gtfs = _find_gtfs(DATA_ROOT)
 
     if args.all_months:
-        result = compute_all(DB_PATH, DATA_ROOT, SITE_DATA_DIR, args.gtfs)
+        result = compute_all(DB_PATH, DATA_ROOT, SITE_DATA_DIR, args.gtfs, source=args.source)
     else:
-        result = compute(args.month, gtfs_zip=args.gtfs)
+        result = compute(args.month, gtfs_zip=args.gtfs, source=args.source)
 
     print(json.dumps(result))
     sys.exit(0)

@@ -25,8 +25,9 @@ cd site && npm run build             # site build (requires public/data/*.json)
 
 # Pipeline entry-points
 python pipeline/build_stop_events.py --date YYYY-MM-DD
-python pipeline/compute_metrics.py --month YYYY-MM [--gtfs PATH]   # single month
-python pipeline/compute_metrics.py --all-months [--gtfs PATH]       # all months (nightly uses this)
+python pipeline/build_vehicle_arrivals.py --date YYYY-MM-DD [--gtfs PATH]
+python pipeline/compute_metrics.py --month YYYY-MM [--gtfs PATH] [--source tu|vp|merged]
+python pipeline/compute_metrics.py --all-months [--gtfs PATH] [--source tu|vp|merged]
 ```
 
 ## Source of record — read before touching pipeline code
@@ -43,9 +44,10 @@ Feed quirks are in `SPEC.md §2`. They are normative — the matcher MUST handle
 - `methodology.astro` text matches `SPEC.md §4` verbatim — do not paraphrase
 - Zero cookies, zero localStorage, no external requests
 
-## v2 boundary — do NOT build
+## v2 boundary — in progress
 
-VehiclePositions processing, stop-level pages, excess-waiting-time metric, real-time site features, accounts, English version, third-party API.
+VehiclePositions matcher (VP-2 done), hybrid merge (VP-3 in progress).
+Still out of scope: stop-level pages, excess-waiting-time metric, real-time site features, accounts, English version, third-party API.
 
 ## Development workflow
 
