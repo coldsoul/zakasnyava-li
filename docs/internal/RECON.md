@@ -28,9 +28,10 @@ No authentication required. No rate limiting observed at 1 poll / 30 s over ~9 h
   misses essentially nothing.
 - **Scale:** TripUpdates ~81 KB / 161 trip entities at ~21:00 UTC (midnight Sofia);
   ~932 KB / 1,326 entities at ~06:10 UTC (09:10 Sofia, rush hour).
-  VehiclePositions: 127 vehicles at night, 590 at rush hour.
-  Note: active trips ≈ 2.2× vehicle positions at peak — not all trips map 1:1 to a
-  GPS-reporting vehicle; worth revisiting when v2 does position-based matching.
+   VehiclePositions: 127 vehicles at night, 590 at rush hour.
+   Note: active trips ≈ 2.2× vehicle positions at peak — not all trips map 1:1 to a
+   GPS-reporting vehicle; **confirmed by 2026-07-01 recon as 47% at peak (579 VP /
+   1,231 TU).** v2 pipeline must use hybrid approach (VP where available, TU fallback).
 - **Static GTFS contents:** agency, calendar_dates, fare_attributes, feed_info,
   levels, pathways, routes, shapes, stop_times, stops, transfers, translations, trips.
   **No `calendar.txt`.** 30,616 trip_ids, 140 route_ids (includes metro: levels/pathways present).
@@ -103,11 +104,70 @@ calendar-filtering bug.
 - Stop events: ~125k matched events in 9.7 h including the thin overnight period →
   expect ~350–550k/day full-service, consistent with the spec's §3 bounds.
 
-## 7. Open items for the implementation
+## 7. VehiclePositions field recon (2026-07-01, pipeline/tier2_vp_recon.py)
+
+Recon on 2026-07-01, 04:00–14:28 Europe/Sofia (10.5 h capture):
+1,884 snapshots, 869,135 total VP entities, peak 579 vehicles per snapshot.
+TripUpdates for same period: 1,885 snapshots, peak 1,231 trip entities.
+
+### Field population (100% = all 869,135 entities)
+
+| Field | % | Implication |
+|-------|----|------------|
+| `trip.trip_id` | 100% | Matching uses `(trip_id, stop_id)` — same key as TU matcher. No geofencing needed for identification. |
+| `stop_id` | 100% | Vehicles self-report their stop. Geofencing reduces to a plausibility check. |
+| `vehicle.id` | 100% | Track a single vehicle across snapshots. |
+| `position.lat` + `position.lon` | 100% | GPS available for every entity. |
+| `position.speed` | ~95% | Present on most entities; useful for motion validation. |
+| `position.bearing` | ~0% | Not populated in observed samples. |
+| `current_stop_sequence` | 0% | Same quirk as TripUpdates — matching key is `(trip_id, stop_id)` only. |
+| `direction_id` | ~0% | Not in samples; direction in `trip_id` string (e.g. `-1-` vs `-2-`). |
+
+### `current_status` distribution
+
+| Status | Count | % |
+|--------|-------|----|
+| `IN_TRANSIT_TO` (2) | 869,135 | 100% |
+| `STOPPED_AT` (1) | 0 | 0% |
+| `INCOMING_AT` (0) | 0 | 0% |
+
+**The Sofia feed never reports a vehicle as stopped.** A bus stopped at a stop with open doors is still `IN_TRANSIT_TO`.
+Geofencing cannot use `current_status` to distinguish actual stops from drive-bys.
+
+### Sample entity (typical)
+
+```json
+{
+  "trip": {"trip_id": "A225-A3961-2-6-11663305601", "route_id": "A225", "schedule_relationship": 0},
+  "vehicle": {"id": "A2805"},
+  "position": {"latitude": 42.696022, "longitude": 23.327175, "speed": 22.0},
+  "current_status": "IN_TRANSIT_TO",
+  "stop_id": "A6456",
+  "measured_ts": 1782867609
+}
+```
+
+### Design implications for v2
+
+1. **Matching is simple.** VP entities carry `(trip_id, stop_id)` — the same key as the TU matcher.
+   `actual_arrival = measured_ts` (the vehicle's own clock).
+   `delay_sec = actual_arrival - scheduled_ts`.
+   No GPS geofencing needed for identification.
+
+2. **Geofencing is a validation layer.** Calculate haversine distance from `position.(lat, lon)` to
+   the stop's coordinates from `stops.txt`. Flag entities where distance > threshold as suspect
+   (GPS drift, wrong stop reported, feeder vehicle at depot).
+
+3. **Hybrid approach is mandatory.** Only 47% of trips have GPS (579 VP / 1,231 TU at peak).
+   Remaining 53% must fall back to TripUpdates predictions.
+
+4. **Loop route disambiguation.** Same as TU matcher: `stop_id` is unique per scheduled visit
+   on loop routes, so `(trip_id, stop_id)` already resolves correctly.
+
+## 8. Open items for the implementation
 
 - Measure the actual `header.timestamp` change interval precisely (probe suggests
   ≤ a few seconds; confirm and record here).
 - Confirm whether `direction_id` in RT (`dir` field) is populated meaningfully
   (the spike recorded it but did not validate against static trips.txt).
-- Investigate the 2.2× trips-to-vehicles ratio at peak before v2 position matching.
 - Watch for the first CANCELED/SKIPPED entities in the wild and verify handling.
