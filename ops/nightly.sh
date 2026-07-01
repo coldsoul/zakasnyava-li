@@ -65,6 +65,7 @@ nightly_last_exit_status $EXIT_STATUS
 # TYPE nightly_duration_seconds gauge
 nightly_duration_seconds{stage="fetch_gtfs"} ${T_DUR[fetch_gtfs]:-0}
 nightly_duration_seconds{stage="stop_events"} ${T_DUR[stop_events]:-0}
+nightly_duration_seconds{stage="vp_arrivals"} ${T_DUR[vp_arrivals]:-0}
 nightly_duration_seconds{stage="metrics"} ${T_DUR[metrics]:-0}
 nightly_duration_seconds{stage="build"} ${T_DUR[build]:-0}
 nightly_duration_seconds{stage="deploy"} ${T_DUR[deploy]:-0}
@@ -74,6 +75,12 @@ nightly_stop_events_rows $STOP_ROWS
 # HELP nightly_ghost_trips_total Ghost trips counted in last run
 # TYPE nightly_ghost_trips_total gauge
 nightly_ghost_trips_total $GHOST_COUNT
+# HELP nightly_vp_arrivals_rows VehiclePosition arrival rows processed in last run
+# TYPE nightly_vp_arrivals_rows gauge
+nightly_vp_arrivals_rows $VP_ROWS
+# HELP nightly_vp_vehicles VehiclePosition distinct vehicles observed
+# TYPE nightly_vp_vehicles gauge
+nightly_vp_vehicles $VP_VEHICLES
 # HELP nightly_lines_graded Lines graded in last run
 # TYPE nightly_lines_graded gauge
 nightly_lines_graded $LINES_GRADED
@@ -86,6 +93,7 @@ log_summary() {
     local dur=$(( now - RUN_TS ))
     local fg=${T_DUR[fetch_gtfs]:-0}
     local se=${T_DUR[stop_events]:-0}
+    local vp=${T_DUR[vp_arrivals]:-0}
     local me=${T_DUR[metrics]:-0}
     local bu=${T_DUR[build]:-0}
     local de=${T_DUR[deploy]:-0}
@@ -101,12 +109,15 @@ print(json.dumps({
     "stage_durations": {
         "fetch_gtfs":  ${fg},
         "stop_events": ${se},
+        "vp_arrivals": ${vp},
         "metrics":     ${me},
         "build":       ${bu},
         "deploy":      ${de}
     },
     "stop_events_rows": ${STOP_ROWS},
     "ghost_trips_total": ${GHOST_COUNT},
+    "vp_arrivals_rows": ${VP_ROWS},
+    "vp_vehicles": ${VP_VEHICLES},
     "lines_graded": ${LINES_GRADED}
 }))
 PY
@@ -154,11 +165,36 @@ print(con.execute(
 
 stage_end stop_events
 
-# ── Stage 3: Compute current-month metrics ───────────────────────────────────
+# ── Stage 2b: Build yesterday's vehicle arrivals (GPS ground truth) ──────────
+
+stage_start vp_arrivals
+DB_PATH="${DB_PATH}" "${PYTHON}" "${REPO_DIR}/pipeline/build_vehicle_arrivals.py" \
+    --date "${YESTERDAY}"
+
+VP_ROWS=$(DB="${DB_PATH}" DT="${YESTERDAY}" "${PYTHON}" -c "
+import sqlite3, os
+con = sqlite3.connect(os.environ['DB'])
+print(con.execute(
+    'SELECT COUNT(*) FROM vehicle_arrivals WHERE service_date=?', (os.environ['DT'],)
+).fetchone()[0])
+" 2>/dev/null || echo 0)
+
+VP_VEHICLES=$(DB="${DB_PATH}" DT="${YESTERDAY}" "${PYTHON}" -c "
+import sqlite3, os
+con = sqlite3.connect(os.environ['DB'])
+print(con.execute(
+    'SELECT COUNT(DISTINCT vehicle_id) FROM vehicle_arrivals WHERE service_date=? AND vehicle_id IS NOT NULL',
+    (os.environ['DT'],)
+).fetchone()[0])
+" 2>/dev/null || echo 0)
+
+stage_end vp_arrivals
+
+# ── Stage 3: Compute current-month metrics (VP+TU merged) ─────────────────────
 
 stage_start metrics
 RESULT=$(SITE_DATA_DIR="${SITE_DATA_DIR}" DB_PATH="${DB_PATH}" \
-    "${PYTHON}" "${REPO_DIR}/pipeline/compute_metrics.py" --all-months)
+    "${PYTHON}" "${REPO_DIR}/pipeline/compute_metrics.py" --all-months --source merged)
 LINES_GRADED=$("${PYTHON}" -c "
 import json, sys
 d = json.loads(sys.argv[1])
