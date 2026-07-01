@@ -57,6 +57,24 @@ def gtfs_time_to_epoch(service_date_str: str, hms: str) -> int:
     return int((base + timedelta(hours=h, minutes=m, seconds=s)).timestamp())
 
 
+def load_stop_coordinates(zip_path: Path) -> dict[str, tuple[float, float]]:
+    """Parse stops.txt from a GTFS zip into {stop_id: (lat, lon)}.
+
+    Used by the VehiclePositions matcher for GPS geofencing validation.
+    """
+    coords: dict[str, tuple[float, float]] = {}
+    zf = zipfile.ZipFile(zip_path)
+    for row in _csv_rows(zf, "stops.txt"):
+        try:
+            coords[row["stop_id"]] = (
+                float(row["stop_lat"]),
+                float(row["stop_lon"]),
+            )
+        except (ValueError, KeyError):
+            continue
+    return coords
+
+
 def _csv_rows(zf: zipfile.ZipFile, name: str):
     with zf.open(name) as f:
         yield from csv.DictReader(io.TextIOWrapper(f, "utf-8-sig"))
