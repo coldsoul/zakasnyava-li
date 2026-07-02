@@ -1,0 +1,10 @@
+{
+  "days": [
+    {
+      "date": "2026-07-01",
+      "pct": 97.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4189
+    }
+  ]
+}

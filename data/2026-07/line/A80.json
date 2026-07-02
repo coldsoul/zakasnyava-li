@@ -1,0 +1,383 @@
+{
+  "caveats": [],
+  "distribution_buckets": [
+    {
+      "count": 15,
+      "label": "<-1m"
+    },
+    {
+      "count": 258,
+      "label": "-1..2m"
+    },
+    {
+      "count": 150,
+      "label": "2..5m"
+    },
+    {
+      "count": 55,
+      "label": "5..10m"
+    },
+    {
+      "count": 6,
+      "label": "10..15m"
+    },
+    {
+      "count": 20,
+      "label": "15+m"
+    }
+  ],
+  "heatmap": [
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      -0.4,
+      -0.2,
+      1.5,
+      0.5,
+      1.8,
+      1.1,
+      0.5,
+      1.5,
+      2.1,
+      2.3,
+      1.7,
+      2.2,
+      4.9,
+      11.6,
+      6.8,
+      1.6,
+      2.6,
+      3.9,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "meta": {
+    "line_id": "A80",
+    "name": "75",
+    "type": "bus"
+  },
+  "per_direction": {
+    "0": {
+      "distribution_buckets": [
+        {
+          "count": 15,
+          "label": "<-1m"
+        },
+        {
+          "count": 258,
+          "label": "-1..2m"
+        },
+        {
+          "count": 150,
+          "label": "2..5m"
+        },
+        {
+          "count": 55,
+          "label": "5..10m"
+        },
+        {
+          "count": 6,
+          "label": "10..15m"
+        },
+        {
+          "count": 20,
+          "label": "15+m"
+        }
+      ],
+      "grade": "B",
+      "heatmap": [
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          -0.4,
+          -0.2,
+          1.5,
+          0.5,
+          1.8,
+          1.1,
+          0.5,
+          1.5,
+          2.1,
+          2.3,
+          1.7,
+          2.2,
+          4.9,
+          11.6,
+          6.8,
+          1.6,
+          2.6,
+          3.9,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      ],
+      "median": 1.8,
+      "ontime_pct": 70.6,
+      "p90": 6.4,
+      "sample_n": 504,
+      "score": 73.9,
+      "served_pct": 100.0,
+      "weekly": [
+        {
+          "median": 1.8,
+          "p90": 6.4,
+          "week_start": "2026-06-29"
+        }
+      ]
+    }
+  },
+  "weekly": [
+    {
+      "median": 1.8,
+      "p90": 6.4,
+      "week_start": "2026-06-29"
+    }
+  ]
+}
