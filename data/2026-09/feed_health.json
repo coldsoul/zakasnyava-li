@@ -1,0 +1,76 @@
+{
+  "days": [
+    {
+      "date": "2026-09-01",
+      "pct": 99.7,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4307
+    },
+    {
+      "date": "2026-09-02",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-09-03",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-09-04",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-09-05",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-09-06",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-09-07",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-09-08",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-09-09",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-09-10",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-09-11",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-09-12",
+      "pct": 97.6,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4217
+    }
+  ]
+}
