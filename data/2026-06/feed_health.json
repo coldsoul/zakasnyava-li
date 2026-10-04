@@ -1,0 +1,124 @@
+{
+  "days": [
+    {
+      "date": "2026-06-11",
+      "pct": 52.9,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 2284
+    },
+    {
+      "date": "2026-06-12",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-13",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-14",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-15",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-16",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4319
+    },
+    {
+      "date": "2026-06-17",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4319
+    },
+    {
+      "date": "2026-06-18",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-19",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-20",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-21",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-22",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-23",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-24",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-25",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-26",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-27",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4318
+    },
+    {
+      "date": "2026-06-28",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-06-29",
+      "pct": 99.6,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4303
+    },
+    {
+      "date": "2026-06-30",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    }
+  ]
+}
