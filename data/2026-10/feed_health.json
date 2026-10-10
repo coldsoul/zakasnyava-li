@@ -1,0 +1,58 @@
+{
+  "days": [
+    {
+      "date": "2026-10-01",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-10-02",
+      "pct": 99.9,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4317
+    },
+    {
+      "date": "2026-10-03",
+      "pct": 99.7,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4305
+    },
+    {
+      "date": "2026-10-04",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-10-05",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-10-06",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-10-07",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-10-08",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4319
+    },
+    {
+      "date": "2026-10-09",
+      "pct": 97.9,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4228
+    }
+  ]
+}
