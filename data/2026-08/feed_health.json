@@ -1,0 +1,190 @@
+{
+  "days": [
+    {
+      "date": "2026-08-01",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-02",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4319
+    },
+    {
+      "date": "2026-08-03",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-04",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-05",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-06",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-07",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-08",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-09",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-10",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-11",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-12",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-13",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-14",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-15",
+      "pct": 99.9,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4316
+    },
+    {
+      "date": "2026-08-16",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-17",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-18",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-19",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-20",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-21",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-22",
+      "pct": 99.7,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4309
+    },
+    {
+      "date": "2026-08-23",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-24",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4319
+    },
+    {
+      "date": "2026-08-25",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-26",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-27",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-28",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-29",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-30",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-08-31",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    }
+  ]
+}
