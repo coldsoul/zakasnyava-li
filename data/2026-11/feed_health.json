@@ -1,0 +1,40 @@
+{
+  "days": [
+    {
+      "date": "2026-11-01",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-11-02",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-11-03",
+      "pct": 99.9,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4314
+    },
+    {
+      "date": "2026-11-04",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-11-05",
+      "pct": 100.0,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4320
+    },
+    {
+      "date": "2026-11-06",
+      "pct": 98.3,
+      "snapshots_expected": 4320,
+      "snapshots_ok": 4247
+    }
+  ]
+}
